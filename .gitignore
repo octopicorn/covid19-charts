@@ -1,3 +1,7 @@
-*.csv
+downloads/daily-reports/*.csv
+*_v2.csv
+menu.json
+timeseries.json
 node_modules
 .idea
+.DS_Store
