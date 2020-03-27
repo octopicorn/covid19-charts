@@ -24,7 +24,7 @@
     }
 
     let areasOfInterest = {
-      countries: ['Italy', 'US'],
+      countries: ['China', 'Italy', 'Spain', 'US'],
       states: ['California'],
       counties: [],
     }
@@ -180,6 +180,7 @@
             label: `${country} Confirmed`,
             data: covData.timeseries.countries[country].timeseriesByCategory['Confirmed'],
             fill: false,
+            borderWidth: 0,
           }
           datasets.push(dataset);
         }
@@ -189,6 +190,7 @@
             label: `${country} Deaths`,
             data: covData.timeseries.countries[country].timeseriesByCategory['Deaths'],
             fill: false,
+            borderWidth: 0,
           }
           datasets.push(dataset);
         }
@@ -201,6 +203,7 @@
             label: `${state} Confirmed`,
             data: covData.timeseries.states[state].timeseriesByCategory['Confirmed'],
             fill: false,
+            borderWidth: 0,
           }
           datasets.push(dataset);
         }
@@ -210,6 +213,7 @@
             label: `${state} Deaths`,
             data: covData.timeseries.states[state].timeseriesByCategory['Deaths'],
             fill: false,
+            borderWidth: 0,
           }
           datasets.push(dataset);
         }

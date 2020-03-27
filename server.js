@@ -21,11 +21,6 @@ const categories = ['Confirmed', 'Deaths'];
 
 let todayData = [];
 
-let todayUSARegions = {};
-let todayUSA = {};
-
-const countriesOfInterest = ['US', 'Italy'];
-
 const options = {
   alignToFirst100: false,
   splitByRegion: false,
@@ -527,6 +522,11 @@ const generateMenu = async() => {
   const {rows: v2Rows, columns: allColumns} = await csvParser.readGlobalCategoryDatafile(null, 'Confirmed', 'v2');
 
   const countries = v2Rows.filter(item => item[0] === '').map(item => item[1]);
+  // ugh, china has to be manually added :(
+  // why? because JH V2 report does not have a single row with rollup of China data
+  // find Colombia and insert right before
+  const indexToInsertChina = countries.findIndex(item => item === 'Colombia');
+  countries.splice(indexToInsertChina, 0, 'China');
 
   // get a list of all available states by reading the v1 global data file
   const {rows: v1Rows} = await csvParser.readGlobalCategoryDatafile(null, 'Confirmed', 'v1');
@@ -606,6 +606,28 @@ const generateTimeseriesFile = async() => {
     if (!timeseriesDays.length) {
       const [columnRegion, columnCountry, columnLat, columnLong, ...restOfColumns] = allColumns;
       timeseriesDays = restOfColumns;
+    }
+
+    // China is a special case
+    // there is no single row in the V2 report for China as a whole
+    // as a result, we have to tally up the provinces in China for that country's total :\
+    const chinaProvinceRows = allRows.filter(item => item[0] !== '' && item[1] === 'China');
+    let chinaTimeseries; // start undefined
+    for(const chinaProvinceRow of chinaProvinceRows) {
+      const [region, countryCode, lat, long, ...timeseries] = chinaProvinceRow;
+      const timeseriesNumeric = timeseries.map(item => Number(item));
+
+      if (!chinaTimeseries) {
+        // use the first row to initialize the baseline timeseries
+        chinaTimeseries = timeseriesNumeric;
+      } else {
+        // every subsequent row, just add to to the baseline row
+        timeseriesNumeric.forEach((item, index) => chinaTimeseries[index] += item);
+      }
+    }
+
+    if (response.timeseries.countries['China']){
+      response.timeseries.countries['China'].timeseriesByCategory[category] = chinaTimeseries;
     }
 
     // filter out non-country rows
