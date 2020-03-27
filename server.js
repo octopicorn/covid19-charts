@@ -737,9 +737,10 @@ const generateTimeseriesFile = async() => {
     for (dailyFile of dailyFiles) {
 
       const dateString = dailyFilesStartDate.format('YYYY-MM-DD');
+      console.log('parsing daily file ', dateString)
       const {rows: dailyFileRows} = await csvParser.readDailyReport(dateString);
 
-      console.log('parsing daily file ', dateString)
+
 
       const daysFromJan22 = dailyFilesStartDate.diff(timeseriesStartDate, 'days');
 
