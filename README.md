@@ -3,6 +3,10 @@
 ## Purpose
 Allow users to generate their own visualizations of the covid-19 pandemic, comparing timeseries for countries, states, and US counties.
 
+## Screenshot
+<img width="1440" alt="Screen Shot 2020-03-27 at 2 37 52 AM" src="https://user-images.githubusercontent.com/2448666/77742816-50f1df80-6fd4-11ea-9b7b-bfdc9fc79270.png">
+
+
 ## Requirements
 1. have access to command line on your computer
 2. have node.js installed (already done if you're on OS X)
