@@ -667,7 +667,8 @@ const generateTimeseriesFile = async() => {
 
   // create stub record for each county
   for (county of counties){
-    response.timeseries.counties[county[0]] = {
+    const countyFullName = `${county[0]}, ${county[1]}`;
+    response.timeseries.counties[countyFullName] = {
       name: county[0],
       state: county[1],
       timeseriesByCategory: {
@@ -691,6 +692,7 @@ const generateTimeseriesFile = async() => {
     for (countyRow of countyRows) {
 
       const [countyFIPS, countyNameWithCounty, stateCode, stateFIPS, ...timeseries] = countyRow;
+
       const timeseriesNumeric = timeseries.map(item => Number(item));
 
       let countyName = countyNameWithCounty.replace(' County', '');
@@ -698,6 +700,7 @@ const generateTimeseriesFile = async() => {
 
       if (regionsUSA[stateCode]){
         const stateName = regionsUSA[stateCode]
+        countyName = `${countyName}, ${stateName}`;
 
         if (response.timeseries.counties[countyName]) {
           response.timeseries.counties[countyName].timeseriesByCategory[category] = timeseriesNumeric;
@@ -722,7 +725,7 @@ const generateTimeseriesFile = async() => {
     // additionally, keep a cumulative tally of states as we visit each county, so we can also get the state rollup total as well
     // when done, update the state timeseries with the new day's count
     const directoryPath = path.join(__dirname, 'downloads', 'daily-reports');
-    const dailyFiles = fs.readdirSync(directoryPath);
+    const dailyFiles = fs.readdirSync(directoryPath).filter(item => item.indexOf('.csv') > -1);
 
     // console.log(dailyFiles)
 
