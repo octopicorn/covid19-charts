@@ -3,7 +3,7 @@
 ## Purpose
 Allow users to generate their own visualizations of the covid-19 pandemic, comparing timeseries for countries, states, and US counties.
 
-<img width="1440" alt="Screen Shot 2020-03-27 at 2 37 52 AM" src="https://user-images.githubusercontent.com/2448666/77742816-50f1df80-6fd4-11ea-9b7b-bfdc9fc79270.png">
+<img width="1430" alt="Screen Shot 2020-03-27 at 7 36 38 PM" src="https://user-images.githubusercontent.com/2448666/77813006-8218f100-7062-11ea-949c-3a547a522a2f.png">
 
 
 ## Requirements
