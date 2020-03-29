@@ -6,6 +6,7 @@
   <title>covid-19 charts</title>
 
   <link href="/jslib/chartjs/Chart.min.css" rel="stylesheet" type="text/css"/>
+  <link href="/main.css" rel="stylesheet" type="text/css"/>
 
   <script language="javascript" type="text/javascript" src="/jslib/jquery.js"></script>
   <script language="javascript" type="text/javascript" src="/jslib/chartjs/Chart.bundle.min.js"></script>
@@ -23,6 +24,7 @@
     let settings = {
       showConfirmed: true,
       showDeaths: false,
+      snapTo100: false,
     }
 
     let areasOfInterest = {
@@ -527,357 +529,7 @@
 
   </script>
 
-  <style>
-    body {
-      font-family: "Arial";
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      background-color: #EEE;
-    }
 
-    h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    header {
-      background-color: #EEE;
-      padding: 10px 0px 10px 25px;
-    }
-
-    header img {
-      vertical-align: middle;
-    }
-
-    main {
-      width: 100%;
-      height: 100%;
-    }
-
-    nav {
-      display: flex;
-      max-width: 100%;
-      padding-bottom: 25px;
-      padding-top: 25px;
-      background-color: #EEE;
-    }
-
-    .options-container {
-
-    }
-
-    #chart-content {
-      display: block;
-      width: 100%;
-
-      background-color: #FFF;
-      border-top-right-radius: 10px;
-      border-bottom-right-radius: 10px;
-    }
-
-    #chart-placeholder {
-      width: 100%;
-      min-height: 50%;
-      font-size: 14px;
-
-    }
-    .menu-list {
-      font-size: 15px;
-      height: 100%;
-      border: solid 1px #DDD;
-      overflow-y: scroll;
-    }
-    .menu-list-item {
-      padding: 5px 5px;
-      border-bottom: solid 1px #DDD;
-      cursor: pointer;
-    }
-    .menu-list-item.selected {
-      background-color: #333;
-      color: #FFF;
-    }
-    button {
-      border: solid 1px gray;
-      color: gray;
-      font-weight: bold;
-      padding: 10px;
-      cursor: pointer;
-      background-color: #EFEFEF;
-    }
-    button.selected {
-      color: #FFF;
-      background-color: gray;
-    }
-    .options-container {
-      margin-top: 20px;
-    }
-
-    .option-container {
-      display: flex;
-      align-items: center;
-      padding: 10px;
-    }
-    .option-container.disabled {
-      color: #AAA;
-    }
-
-    .option-title {
-      font-weight: bold;
-      font-size: 20px;
-      padding: 10px;
-    }
-
-    .github-link {
-      background-color: #FFF;
-      padding: 10px;
-      border: solid 1px #DDD;
-      border-radius: 10px;
-    }
-    .github-link a {
-      color: cornflowerblue;
-    }
-
-    .select {
-      font-size: 16px;
-      position: relative;
-      display: inline-block;
-    }
-    .select select {
-      outline: none;
-      -webkit-appearance: none;
-      display: block;
-      padding: 10px;
-      margin: 0;
-
-      transition: border-color 0.2s;
-      border: 1px solid gray;
-      border-radius: 0;
-
-      background: #fff;
-      color: gray;
-      line-height: normal;
-      font-family: inherit;
-      font-size: inherit;
-      line-height: inherit;
-    }
-    .select .arr {
-      background: #fff;
-      bottom: 5px;
-      position: absolute;
-      right: 5px;
-      top: 5px;
-      width: 50px;
-      pointer-events: none;
-    }
-    .select .arr:before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      right: 24px;
-      margin-top: -5px;
-      pointer-events: none;
-      border-top: 10px solid gray;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-    }
-
-    .select .arr:after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      right: 28px;
-      margin-top: -5px;
-      pointer-events: none;
-      border-top: 6px solid #fff;
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-    }
-
-    .checkbox {
-      display: block;
-      position: relative;
-      padding-left: 35px;
-      margin-bottom: 24px;
-      cursor: pointer;
-      font-size: 22px;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-
-    }
-
-    .checkbox input {
-      position: absolute;
-      opacity: 0;
-      cursor: pointer;
-      height: 0;
-      width: 0;
-    }
-
-    .checkbox .checkmark {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 25px;
-      width: 25px;
-      background-color: #eee;
-      border: solid 1px gray;
-    }
-
-    .option-container.disabled .checkbox .checkmark {
-      background-color: #FFF;
-    }
-
-    /* On mouse-over, add a grey background color */
-    .checkbox:hover input ~ .checkmark {
-      background-color: #ccc;
-    }
-
-    /* When the checkbox is checked, add a blue background */
-    .checkbox input:checked ~ .checkmark {
-      background-color: #2196F3;
-    }
-
-    /* Create the checkmark/indicator (hidden when not checked) */
-    .checkbox .checkmark:after {
-      content: "";
-      position: absolute;
-      display: none;
-    }
-
-    /* Show the checkmark when checked */
-    .checkbox input:checked ~ .checkmark:after {
-      display: block;
-    }
-
-    /* Style the checkmark/indicator */
-    .checkbox .checkmark:after {
-      left: 9px;
-      top: 5px;
-      width: 5px;
-      height: 10px;
-      border: solid white;
-      border-width: 0 3px 3px 0;
-      -webkit-transform: rotate(45deg);
-      -ms-transform: rotate(45deg);
-      transform: rotate(45deg);
-    }
-
-    .clear-data {
-      color: cornflowerblue;
-      font-size: 10px;
-    }
-
-    /* mobile devices */
-    @media (max-width:992px){
-
-      header {
-        padding: 10px 10px 10px 10px;
-      }
-      header a {
-        font-size: 13px;
-      }
-      header img {
-        width: 20px;
-        height: 20px;
-        padding-right: 10px;
-      }
-      h1 {
-        font-size: 16px;
-      }
-      nav {
-        width: 100%;
-        max-height: 250px;
-        margin-bottom: 25px;
-      }
-      nav section {
-        padding: 0 5px;
-
-      }
-      canvas {
-        width: 100%;
-      }
-      button {
-        font-size: 12px;
-      }
-      select {
-        max-width: 200px;
-      }
-
-      #chart-content {
-        height: 300px;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-      }
-
-      .options-container {
-        display: block;
-      }
-
-      .select .arr {
-
-      }
-
-      .github-link {
-        font-size: 12px;
-      }
-    }
-
-
-    /* desktop computer screens */
-    @media (min-width:993px){
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 0px 10px 10px;
-      }
-      header img {
-        width: 30px;
-        height: 30px;
-        padding-right: 10px;
-      }
-      main {
-        display: flex;
-        justify-content: space-between;
-      }
-      nav {
-        width: 500px;
-        padding-right: 15px;
-      }
-      nav section {
-
-        padding-left: 15px;
-      }
-      button {
-        font-size: 20px;
-      }
-      .options-container {
-        display: flex;
-      }
-      .select .arr {
-        right: 5px;
-        width: 50px;
-      }
-
-    }
-
-    /* tablet */
-    @media (min-width:993px) and (max-width:1024px){
-      #chart-content {
-        height: auto;
-      }
-      .options-container {
-        display: block;
-      }
-      .github-link {
-        font-size: 12px;
-      }
-    }
-
-  </style>
 </head>
 
 <body>
@@ -910,6 +562,7 @@
           </label>
         </div>
 
+        <!--
         <div class="option-container">
           <div class="option-title">
             Chart
@@ -919,6 +572,7 @@
             <button class="button-change-chart-type selected" data-type="line">line</button>
           </div>
         </div>
+        -->
 
         <div class="option-container">
           <div class="option-title">
