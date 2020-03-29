@@ -102,6 +102,10 @@ button.selected {
     padding: 10px;
 }
 
+.buttons-container {
+    min-block-size: fit-content;
+}
+
 .github-link {
     background-color: #FFF;
     padding: 10px;
