@@ -29,6 +29,22 @@ const options = {
   subregions: [],
 };
 
+const regionsCanada = {
+  "AB": "Alberta",
+  "BC": "British Columbia",
+  "MB": "Manitoba",
+  "NB": "New Brunswick",
+  "NL": "Newfoundland and Labrador",
+  "NS": "Nova Scotia",
+  "NT": "Northwest Territories",
+  "NU": "Nunavut",
+  "ON": "Ontario",
+  "PE": "Prince Edward Island",
+  "QC": "Québec",
+  "SK": "Saskatchewan",
+  "YT": "Yukon",
+}
+
 const regionsUSA = {
   "AL": "Alabama",
   "AK": "Alaska",
@@ -522,7 +538,14 @@ const generateMenu = async() => {
   const {rows: v2Rows, columns: allColumns} = await csvParser.readGlobalCategoryDatafile(null, 'Confirmed', 'v2');
 
   const countries = v2Rows.filter(item => item[0] === '').map(item => item[1]);
-  // ugh, china has to be manually added :(
+
+  // china has to be manually added
+  // why? because JH V2 report does not have a single row with rollup of China data
+  // find Colombia and insert right before
+  const indexToInsertCanada = countries.findIndex(item => item === 'Central African Republic');
+  countries.splice(indexToInsertCanada, 0, 'Canada');
+
+  // china has to be manually added
   // why? because JH V2 report does not have a single row with rollup of China data
   // find Colombia and insert right before
   const indexToInsertChina = countries.findIndex(item => item === 'Colombia');
@@ -531,9 +554,12 @@ const generateMenu = async() => {
   // get a list of all available states by reading the v1 global data file
   const {rows: v1Rows} = await csvParser.readGlobalCategoryDatafile(null, 'Confirmed', 'v1');
 
+  const allowedCanadaProvinces = Object.values(regionsCanada);
+  const canadaProvinces = v1Rows.filter(item => item[1] === 'Canada' && item[0] !== '' && allowedCanadaProvinces.includes(item[0]) ).map(item => item[0]);
   const allowedStates = Object.values(regionsUSA);
-  const states = v1Rows.filter(item => item[1] === 'US' && item[0] !== '' && allowedStates.includes(item[0]) ).map(item => item[0]);
+  const USstates = v1Rows.filter(item => item[1] === 'US' && item[0] !== '' && allowedStates.includes(item[0]) ).map(item => item[0]);
 
+  const states = USstates.concat(canadaProvinces);
 
   // get a list of all available counties by looking at the earliest daily report
   const {rows: dailyReportRows, columns: dailyReportColumns} = await csvParser.readDailyReport();
@@ -608,6 +634,27 @@ const generateTimeseriesFile = async() => {
       timeseriesDays = restOfColumns;
     }
 
+    // Canada is a special case
+    // there is no single row in the V2 report for Canada as a whole
+    // as a result, we have to tally up the provinces in Canada for that country's total :\
+    const canadaProvinceRows = allRows.filter(item => item[0] !== '' && item[1] === 'Canada');
+    let canadaTimeseries; // start undefined
+    for(const canadaProvinceRow of canadaProvinceRows) {
+      const [region, countryCode, lat, long, ...timeseries] = canadaProvinceRow;
+      const timeseriesNumeric = timeseries.map(item => Number(item));
+
+      if (!canadaTimeseries) {
+        // use the first row to initialize the baseline timeseries
+        canadaTimeseries = timeseriesNumeric;
+      } else {
+        // every subsequent row, just add to to the baseline row
+        timeseriesNumeric.forEach((item, index) => canadaTimeseries[index] += item);
+      }
+    }
+    if (response.timeseries.countries['Canada']){
+      response.timeseries.countries['Canada'].timeseriesByCategory[category] = canadaTimeseries;
+    }
+
     // China is a special case
     // there is no single row in the V2 report for China as a whole
     // as a result, we have to tally up the provinces in China for that country's total :\
@@ -665,9 +712,16 @@ const generateTimeseriesFile = async() => {
 
     // filter out non-state rows
     const allowedStates = Object.values(regionsUSA);
-    const stateRows = v1Rows
+    const USStateRows = v1Rows
       .filter(item => item[1] === 'US' && item[0] !== '')
       .filter(item => allowedStates.includes(item[0]));
+
+    const allowedCanadaProvinces = Object.values(regionsCanada);
+    const canadaProvinceRows = v1Rows
+      .filter(item => item[1] === 'Canada' && item[0] !== '')
+      .filter(item => allowedCanadaProvinces.includes(item[0]));
+
+    const stateRows = USStateRows.concat(canadaProvinceRows);
 
     for (stateRow of stateRows) {
 
@@ -765,13 +819,11 @@ const generateTimeseriesFile = async() => {
       console.log('parsing daily file ', dateString)
       const {rows: dailyFileRows} = await csvParser.readDailyReport(dateString);
 
-
-
       const daysFromJan22 = dailyFilesStartDate.diff(timeseriesStartDate, 'days');
 
       const timeseriesArrayIndexToUpdate = daysFromJan22;
 
-      const dailyRows = dailyFileRows.filter(item => item[3] === 'US');
+      const dailyRows = dailyFileRows.filter(item => item[3] === 'US' || item[3] === 'Canada');
 
       // use this to keep tally by for each state
       const stateTallies = {};
@@ -794,25 +846,38 @@ const generateTimeseriesFile = async() => {
           Combined_Key,
         ] = dailyFileRow;
 
+
         const countyConfirmedCount = Number(Confirmed);
         const countyDeathsCount = Number(Deaths);
 
-        if (Province_State === 'California') {
-          // console.log('Province_State', Province_State, Confirmed, Deaths)
-        }
+        // for US counties, keep a state tally
+        if (Country_Region === 'US') {
 
-        if (typeof stateTallies[Province_State] === 'undefined') {
-          stateTallies[Province_State] = {'Confirmed': 0, 'Deaths': 0};
-        }
+          if (typeof stateTallies[Province_State] === 'undefined') {
+            stateTallies[Province_State] = {'Confirmed': 0, 'Deaths': 0};
+          }
 
-        // keep up state tally for later
-        stateTallies[Province_State]['Confirmed'] += countyConfirmedCount;
-        stateTallies[Province_State]['Deaths'] += countyDeathsCount;
+          // keep up state tally for later
+          stateTallies[Province_State]['Confirmed'] += countyConfirmedCount;
+          stateTallies[Province_State]['Deaths'] += countyDeathsCount;
 
-        // add to county cumulative
-        if (Admin2 && response.timeseries.counties[Admin2]) {
-          response.timeseries.counties[Admin2].timeseriesByCategory['Confirmed'][timeseriesArrayIndexToUpdate] = countyConfirmedCount;
-          response.timeseries.counties[Admin2].timeseriesByCategory['Deaths'][timeseriesArrayIndexToUpdate] = countyDeathsCount;
+          const countyName = `${Admin2}, ${Province_State}`;
+
+          // add to county cumulative
+          if (Admin2 && response.timeseries.counties[countyName]) {
+            response.timeseries.counties[countyName].timeseriesByCategory['Confirmed'][timeseriesArrayIndexToUpdate] = countyConfirmedCount;
+            response.timeseries.counties[countyName].timeseriesByCategory['Deaths'][timeseriesArrayIndexToUpdate] = countyDeathsCount;
+          }
+        } else if (Country_Region === 'Canada') {
+
+
+          const allowedCanadaProvinces = Object.values(regionsCanada);
+          // add to county cumulative
+          if (Province_State && allowedCanadaProvinces.includes(Province_State) && response.timeseries.states[Province_State]) {
+            response.timeseries.states[Province_State].timeseriesByCategory['Confirmed'][timeseriesArrayIndexToUpdate] = countyConfirmedCount;
+            response.timeseries.states[Province_State].timeseriesByCategory['Deaths'][timeseriesArrayIndexToUpdate] = countyDeathsCount;
+          }
+
         }
 
       }
