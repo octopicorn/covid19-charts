@@ -2,6 +2,7 @@
 
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>covid-19 charts</title>
 
   <link href="/jslib/chartjs/Chart.min.css" rel="stylesheet" type="text/css"/>
@@ -17,6 +18,7 @@
     let covData;
     let chart;
     let chartConfig;
+    let isMobile;
 
     let settings = {
       showConfirmed: true,
@@ -28,6 +30,27 @@
       states: ['California'],
       counties: [],
     }
+
+    let detectMobile = {
+      Android: function() {
+        return navigator.userAgent.match(/Android/i);
+      },
+      BlackBerry: function() {
+        return navigator.userAgent.match(/BlackBerry/i);
+      },
+      iOS: function() {
+        return navigator.userAgent.match(/iPhone|iPad|iPod/i);
+      },
+      Opera: function() {
+        return navigator.userAgent.match(/Opera Mini/i);
+      },
+      Windows: function() {
+        return navigator.userAgent.match(/IEMobile/i) || navigator.userAgent.match(/WPDesktop/i);
+      },
+      any: function() {
+        return (detectMobile.Android() || detectMobile.BlackBerry() || detectMobile.iOS() || detectMobile.Opera() || detectMobile.Windows());
+      }
+    };
 
     function renderMenuCountries() {
       if (menuData && menuData.countries) {
@@ -122,7 +145,7 @@
 
         drawChart();
 
-      })
+      });
     }
 
     function bindButtons(){
@@ -132,7 +155,6 @@
         $(this).addClass('selected');
 
         const newChartType = $(this).data('type');
-        console.log('new chart type', newChartType)
         updateChartType(newChartType);
       });
 
@@ -142,7 +164,6 @@
         $(this).addClass('selected');
 
         const newScaleType = $(this).data('type');
-        console.log('new chart type', newScaleType)
         updateChartScale(newScaleType);
       });
 
@@ -152,45 +173,99 @@
         $(this).addClass('selected');
 
         const newDataType = $(this).data('type');
-        console.log('new timeseries data type', newDataType)
         updateTimeseriesDataType(newDataType);
+        drawChart();
+      });
+
+      $('#chart-palette').on('change', function() {
+        const newPalette = $(this).val();
+        updateChartPalette(newPalette);
+      });
+
+      $('#snapTo100').on('click', function() {
+        const isChecked = $(this).is(":checked");
+        settings.snapTo100 = isChecked;
+        drawChart();
+      });
+
+      $('.clear-data').on('click', function (e) {
+        e.preventDefault();
+
+        // unselect all menu items from this group
+        $(this).next('.menu-list').find('.menu-list-item').each(function() {
+          $(this).removeClass('selected')
+        });
+
+        // now clear the group, and re-render the chart
+        const group = $(this).data('group');
+        areasOfInterest[group] = [];
         drawChart();
       });
     }
 
-    function renderMenus() {
-      renderMenuCountries();
-      renderMenuStates();
-      renderMenuCounties();
-      console.log('render menus')
-      bindMenus();
+    function snapDataTo100 (data) {
+
+      let result = []; // in best case scenario, 100 has never been reached, in which case we have default empty dataset
+
+      // if we found a "first 100" day, truncate the data array to start from that day
+      const indexOfFirst100 = data.findIndex(item => item >= 100);
+      if (indexOfFirst100 >= 0){
+        result = data.slice(indexOfFirst100);
+      }
+
+      return result;
 
     }
 
     function drawChart() {
 
-
       let datasets = [];
-      // backgroundColor: 'rgba(255, 99, 132, 0.2)',
+
+      const defaultOptions = {
+        fill: false,
+        borderWidth: 0,
+        pointBorderWidth: isMobile  ? 0 : 1,
+        pointRadius: isMobile  ? 1 : 1,
+      }
+
+      const showCategory = settings.showConfirmed && settings.showDeaths;
+
+      let timeSeriesMaxLength = 0;
 
       // plot countries
       for (country of areasOfInterest.countries) {
         if (settings.showConfirmed) {
+          let data = covData.timeseries.countries[country].timeseriesByCategory['Confirmed'];
+          const label = showCategory ? `${country} Confirmed` : country;
+
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo100){
+            data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+
           dataset = {
-            label: `${country} Confirmed`,
-            data: covData.timeseries.countries[country].timeseriesByCategory['Confirmed'],
-            fill: false,
-            borderWidth: 0,
+            ...defaultOptions,
+            label,
+            data,
           }
           datasets.push(dataset);
         }
 
         if (settings.showDeaths) {
+          let data = covData.timeseries.countries[country].timeseriesByCategory['Deaths'];
+          const label = showCategory ? `${country} Deaths` : country;
+
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo100){
+            data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+
           dataset = {
-            label: `${country} Deaths`,
-            data: covData.timeseries.countries[country].timeseriesByCategory['Deaths'],
-            fill: false,
-            borderWidth: 0,
+            ...defaultOptions,
+            label,
+            data,
           }
           datasets.push(dataset);
         }
@@ -199,21 +274,37 @@
       // plot states
       for (state of areasOfInterest.states) {
         if (settings.showConfirmed) {
+          let data = covData.timeseries.states[state].timeseriesByCategory['Confirmed'];
+          const label = showCategory ? `${state} Confirmed` : state;
+
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo100){
+            data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+
           dataset = {
-            label: `${state} Confirmed`,
-            data: covData.timeseries.states[state].timeseriesByCategory['Confirmed'],
-            fill: false,
-            borderWidth: 0,
+            ...defaultOptions,
+            label,
+            data,
           }
           datasets.push(dataset);
         }
 
         if (settings.showDeaths) {
+          let data = covData.timeseries.states[state].timeseriesByCategory['Deaths'];
+          const label = showCategory ? `${state} Deaths` : state;
+
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo100){
+            data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+
           dataset = {
-            label: `${state} Deaths`,
-            data: covData.timeseries.states[state].timeseriesByCategory['Deaths'],
-            fill: false,
-            borderWidth: 0,
+            ...defaultOptions,
+            label,
+            data,
           }
           datasets.push(dataset);
         }
@@ -222,26 +313,74 @@
       // plot counties
       for (county of areasOfInterest.counties) {
         if (settings.showConfirmed) {
+          let data = covData.timeseries.counties[county].timeseriesByCategory['Confirmed'];
+          const label = showCategory ? `${county} Confirmed` : county;
+
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo100){
+            data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+
           dataset = {
-            label: `${county} Confirmed`,
-            data: covData.timeseries.counties[county].timeseriesByCategory['Confirmed'],
-            fill: false,
+            ...defaultOptions,
+            label,
+            data,
           }
           datasets.push(dataset);
         }
 
         if (settings.showDeaths) {
+          let data = covData.timeseries.counties[county].timeseriesByCategory['Deaths'];
+          const label = showCategory ? `${county} Deaths` : county;
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo100){
+            data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
           dataset = {
-            label: `${country} Deaths`,
-            data: covData.timeseries.counties[county].timeseriesByCategory['Deaths'],
-            fill: false,
+            label,
+            data,
           }
           datasets.push(dataset);
         }
       }
 
+      let title = ''
+      if (settings.showDeaths && settings.showConfirmed) {
+        title = 'Confirmed Cases & Deaths';
+      } else if (settings.showConfirmed) {
+        title = 'Confirmed Cases';
+      } else {
+        title = 'Deaths';
+      }
+
+
+      // var max = -Infinity;
+      // var index = -1;
+      // masterArray.forEach(function(a, i){
+      //   if (a.length>max) {
+      //     max = a.length;
+      //     index = i;
+      //   }
+      // });
+
+      chartConfig.options.title = {
+        display: true,
+        text: title,
+      };
+
       chartConfig.data.datasets = datasets;
-      chart.data.datasets = chartConfig.data.datasets;
+
+      chartConfig.data.labels = covData.timeseriesDays;
+
+      // if snap to 100 feature is activated, use a different x-axis with generic day numbers
+      if (settings.snapTo100) {
+        const truncatedXAxis = [...Array(66).keys()].map((item) => `Day ${item + 1}`);
+        chartConfig.data.labels = truncatedXAxis;
+      }
+
+      chart.data = chartConfig.data;
       chart.update();
     }
 
@@ -269,13 +408,42 @@
       if (confirmedOrDeaths === 'confirmed') {
         settings.showConfirmed = true;
         settings.showDeaths = false;
-      } else {
+      } else if (confirmedOrDeaths === 'deaths') {
         settings.showConfirmed = false;
         settings.showDeaths = true;
+      } else if (confirmedOrDeaths === 'both') {
+        settings.showConfirmed = true;
+        settings.showDeaths = true;
+      }
+
+      // side effects on snapTo100 feature
+      if (settings.showConfirmed && settings.showDeaths) {
+        // uncheck and disable the snapTo100 feature if showing both
+        $('#option-container-snapTo100').addClass('disabled');
+        $('#option-container-snapTo100 input').prop("checked", false).attr('disabled', 'disabled');
+      } else {
+        // restore the snapTo100 feature if showing just one
+        $('#option-container-snapTo100').removeClass('disabled');
+        $('#option-container-snapTo100 input').removeAttr('disabled');
       }
     }
 
+    function updateChartPalette(newPalette) {
+      chartConfig.options.plugins.colorschemes.scheme = newPalette;
+
+      chart.options.plugins.colorschemes.scheme = newPalette;
+      chart.update();
+    }
+
+    function renderMenus() {
+      renderMenuCountries();
+      renderMenuStates();
+      renderMenuCounties();
+    }
+
     $(function () {
+
+      isMobile = detectMobile.any();
 
       $.when(
 
@@ -298,7 +466,11 @@
           covData = data;
 
           renderMenus();
+          bindMenus();
           bindButtons();
+
+          // todays date
+          const todayDate = new Date();
 
           // set up chart
           chartConfig = {
@@ -308,7 +480,7 @@
               datasets: [],
             },
             options: {
-
+              maintainAspectRatio: false,
               plugins: {
                 colorschemes: {
                   //  many color palettes to choose from here: https://nagix.github.io/chartjs-plugin-colorschemes/
@@ -317,11 +489,24 @@
               },
 
               scales: {
-                yAxes: [{
-                  ticks: {
-                    beginAtZero: true,
+
+                xAxes: [
+                  {
+                    scaleLabel: {
+                      display: true,
+                      labelString: `github.com/octopicorn/covid19-charts    Data: Johns Hopkins CSSE, usafacts.org`,
+                      fontColor: '#333',
+                      fontSize: 8,
+                    }
                   }
-                }]
+                ],
+                yAxes: [
+                  {
+                    ticks: {
+                      beginAtZero: true,
+                    }
+                  }
+                ],
               }
             }
           };
@@ -345,43 +530,66 @@
   <style>
     body {
       font-family: "Arial";
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background-color: #EEE;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    header {
+      background-color: #EEE;
+      padding: 10px 0px 10px 25px;
+    }
+
+    header img {
+      vertical-align: middle;
     }
 
     main {
-      display: flex;
       width: 100%;
       height: 100%;
-      justify-content: space-between;
     }
 
     nav {
       display: flex;
-      justify-content: flex-end;
-      width: 500px;
+      max-width: 100%;
+      padding-bottom: 25px;
+      padding-top: 25px;
+      background-color: #EEE;
     }
 
-    nav section {
-      margin: 15px;
+    .options-container {
+
     }
 
     #chart-content {
       display: block;
       width: 100%;
+
+      background-color: #FFF;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
     }
 
     #chart-placeholder {
       width: 100%;
-      height: 100%;
+      min-height: 50%;
       font-size: 14px;
+
     }
     .menu-list {
       font-size: 15px;
       height: 100%;
-      overflow-y: scroll;
       border: solid 1px #DDD;
+      overflow-y: scroll;
     }
     .menu-list-item {
-      padding: 0 5px;
+      padding: 5px 5px;
       border-bottom: solid 1px #DDD;
       cursor: pointer;
     }
@@ -393,53 +601,315 @@
       border: solid 1px gray;
       color: gray;
       font-weight: bold;
-      font-size: 20px;
       padding: 10px;
       cursor: pointer;
+      background-color: #EFEFEF;
     }
     button.selected {
       color: #FFF;
       background-color: gray;
     }
     .options-container {
-      display: flex;
       margin-top: 20px;
     }
+
     .option-container {
       display: flex;
       align-items: center;
       padding: 10px;
     }
+    .option-container.disabled {
+      color: #AAA;
+    }
+
     .option-title {
       font-weight: bold;
       font-size: 20px;
       padding: 10px;
     }
+
     .github-link {
+      background-color: #FFF;
       padding: 10px;
+      border: solid 1px #DDD;
+      border-radius: 10px;
     }
+    .github-link a {
+      color: cornflowerblue;
+    }
+
+    .select {
+      font-size: 16px;
+      position: relative;
+      display: inline-block;
+    }
+    .select select {
+      outline: none;
+      -webkit-appearance: none;
+      display: block;
+      padding: 10px;
+      margin: 0;
+
+      transition: border-color 0.2s;
+      border: 1px solid gray;
+      border-radius: 0;
+
+      background: #fff;
+      color: gray;
+      line-height: normal;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+    }
+    .select .arr {
+      background: #fff;
+      bottom: 5px;
+      position: absolute;
+      right: 5px;
+      top: 5px;
+      width: 50px;
+      pointer-events: none;
+    }
+    .select .arr:before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 24px;
+      margin-top: -5px;
+      pointer-events: none;
+      border-top: 10px solid gray;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+    }
+
+    .select .arr:after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 28px;
+      margin-top: -5px;
+      pointer-events: none;
+      border-top: 6px solid #fff;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+    }
+
+    .checkbox {
+      display: block;
+      position: relative;
+      padding-left: 35px;
+      margin-bottom: 24px;
+      cursor: pointer;
+      font-size: 22px;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+
+    }
+
+    .checkbox input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .checkbox .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 25px;
+      width: 25px;
+      background-color: #eee;
+      border: solid 1px gray;
+    }
+
+    .option-container.disabled .checkbox .checkmark {
+      background-color: #FFF;
+    }
+
+    /* On mouse-over, add a grey background color */
+    .checkbox:hover input ~ .checkmark {
+      background-color: #ccc;
+    }
+
+    /* When the checkbox is checked, add a blue background */
+    .checkbox input:checked ~ .checkmark {
+      background-color: #2196F3;
+    }
+
+    /* Create the checkmark/indicator (hidden when not checked) */
+    .checkbox .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+
+    /* Show the checkmark when checked */
+    .checkbox input:checked ~ .checkmark:after {
+      display: block;
+    }
+
+    /* Style the checkmark/indicator */
+    .checkbox .checkmark:after {
+      left: 9px;
+      top: 5px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 3px 3px 0;
+      -webkit-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+      transform: rotate(45deg);
+    }
+
+    .clear-data {
+      color: cornflowerblue;
+      font-size: 10px;
+    }
+
+    /* mobile devices */
+    @media (max-width:992px){
+
+      header {
+        padding: 10px 10px 10px 10px;
+      }
+      header a {
+        font-size: 13px;
+      }
+      header img {
+        width: 20px;
+        height: 20px;
+        padding-right: 10px;
+      }
+      h1 {
+        font-size: 16px;
+      }
+      nav {
+        width: 100%;
+        max-height: 250px;
+        margin-bottom: 25px;
+      }
+      nav section {
+        padding: 0 5px;
+
+      }
+      canvas {
+        width: 100%;
+      }
+      button {
+        font-size: 12px;
+      }
+      select {
+        max-width: 200px;
+      }
+
+      #chart-content {
+        height: 300px;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      .options-container {
+        display: block;
+      }
+
+      .select .arr {
+
+      }
+
+      .github-link {
+        font-size: 12px;
+      }
+    }
+
+
+    /* desktop computer screens */
+    @media (min-width:993px){
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0px 10px 10px;
+      }
+      header img {
+        width: 30px;
+        height: 30px;
+        padding-right: 10px;
+      }
+      main {
+        display: flex;
+        justify-content: space-between;
+      }
+      nav {
+        width: 500px;
+        padding-right: 15px;
+      }
+      nav section {
+
+        padding-left: 15px;
+      }
+      button {
+        font-size: 20px;
+      }
+      .options-container {
+        display: flex;
+      }
+      .select .arr {
+        right: 5px;
+        width: 50px;
+      }
+
+    }
+
+    /* tablet */
+    @media (min-width:993px) and (max-width:1024px){
+      #chart-content {
+        height: auto;
+      }
+      .options-container {
+        display: block;
+      }
+      .github-link {
+        font-size: 12px;
+      }
+    }
+
   </style>
 </head>
-<head>
 
-</head>
 <body>
 
-
 <main>
-  <div>
+  <div style="flex-grow: 1; background-color: #EEE;">
     <header>
-      <div style="display: flex; align-items: center; justify-content: space-between">
-        <h1>covid-19 charts</h1>
+        <div style="padding-bottom: 5px;">
+          <h1>covid-19 charts</h1>
+          <span style="font-size: 10px;">(right click on chart to save image)</span>
+        </div>
         <div class="github-link">
+          <img src="/github-logo.svg" />
           <a href="https://github.com/octopicorn/covid19-charts" target="_blank">https://github.com/octopicorn/covid19-charts</a>
         </div>
-      </div>
     </header>
     <section id="chart-content">
       <canvas id="chart-placeholder"></canvas>
-
+    </section>
+    <section>
       <div class="options-container">
+
+        <div class="option-container" id="option-container-snapTo100">
+          <div class="option-title">
+            Align to Day of First 100
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" id="snapTo100" />
+            <span class="checkmark"></span>
+          </label>
+        </div>
+
         <div class="option-container">
           <div class="option-title">
             Chart
@@ -460,6 +930,10 @@
           </div>
         </div>
 
+      </div>
+
+      <div class="options-container">
+
         <div class="option-container">
           <div class="option-title">
             Data
@@ -467,24 +941,47 @@
           <div>
             <button class="button-change-timeseries-data-type selected" data-type="confirmed">confirmed</button>
             <button class="button-change-timeseries-data-type" data-type="deaths">deaths</button>
+            <button class="button-change-timeseries-data-type" data-type="both">both</button>
+          </div>
+        </div>
+
+        <div class="option-container">
+          <div class="option-title">
+            Colors
+          </div>
+          <div>
+            <div class="select">
+              <span class="arr"></span>
+              <select id="chart-palette">
+                <option value="brewer.YlGn3">brewer.YlGn3</option><option value="brewer.YlGn4">brewer.YlGn4</option><option value="brewer.YlGn5">brewer.YlGn5</option><option value="brewer.YlGn6">brewer.YlGn6</option><option value="brewer.YlGn7">brewer.YlGn7</option><option value="brewer.YlGn8">brewer.YlGn8</option><option value="brewer.YlGn9">brewer.YlGn9</option><option value="brewer.YlGnBu3">brewer.YlGnBu3</option><option value="brewer.YlGnBu4">brewer.YlGnBu4</option><option value="brewer.YlGnBu5">brewer.YlGnBu5</option><option value="brewer.YlGnBu6">brewer.YlGnBu6</option><option value="brewer.YlGnBu7">brewer.YlGnBu7</option><option value="brewer.YlGnBu8">brewer.YlGnBu8</option><option value="brewer.YlGnBu9">brewer.YlGnBu9</option><option value="brewer.GnBu3">brewer.GnBu3</option><option value="brewer.GnBu4">brewer.GnBu4</option><option value="brewer.GnBu5">brewer.GnBu5</option><option value="brewer.GnBu6">brewer.GnBu6</option><option value="brewer.GnBu7">brewer.GnBu7</option><option value="brewer.GnBu8">brewer.GnBu8</option><option value="brewer.GnBu9">brewer.GnBu9</option><option value="brewer.BuGn3">brewer.BuGn3</option><option value="brewer.BuGn4">brewer.BuGn4</option><option value="brewer.BuGn5">brewer.BuGn5</option><option value="brewer.BuGn6">brewer.BuGn6</option><option value="brewer.BuGn7">brewer.BuGn7</option><option value="brewer.BuGn8">brewer.BuGn8</option><option value="brewer.BuGn9">brewer.BuGn9</option><option value="brewer.PuBuGn3">brewer.PuBuGn3</option><option value="brewer.PuBuGn4">brewer.PuBuGn4</option><option value="brewer.PuBuGn5">brewer.PuBuGn5</option><option value="brewer.PuBuGn6">brewer.PuBuGn6</option><option value="brewer.PuBuGn7">brewer.PuBuGn7</option><option value="brewer.PuBuGn8">brewer.PuBuGn8</option><option value="brewer.PuBuGn9">brewer.PuBuGn9</option><option value="brewer.PuBu3">brewer.PuBu3</option><option value="brewer.PuBu4">brewer.PuBu4</option><option value="brewer.PuBu5">brewer.PuBu5</option><option value="brewer.PuBu6">brewer.PuBu6</option><option value="brewer.PuBu7">brewer.PuBu7</option><option value="brewer.PuBu8">brewer.PuBu8</option><option value="brewer.PuBu9">brewer.PuBu9</option><option value="brewer.BuPu3">brewer.BuPu3</option><option value="brewer.BuPu4">brewer.BuPu4</option><option value="brewer.BuPu5">brewer.BuPu5</option><option value="brewer.BuPu6">brewer.BuPu6</option><option value="brewer.BuPu7">brewer.BuPu7</option><option value="brewer.BuPu8">brewer.BuPu8</option><option value="brewer.BuPu9">brewer.BuPu9</option><option value="brewer.RdPu3">brewer.RdPu3</option><option value="brewer.RdPu4">brewer.RdPu4</option><option value="brewer.RdPu5">brewer.RdPu5</option><option value="brewer.RdPu6">brewer.RdPu6</option><option value="brewer.RdPu7">brewer.RdPu7</option><option value="brewer.RdPu8">brewer.RdPu8</option><option value="brewer.RdPu9">brewer.RdPu9</option><option value="brewer.PuRd3">brewer.PuRd3</option><option value="brewer.PuRd4">brewer.PuRd4</option><option value="brewer.PuRd5">brewer.PuRd5</option><option value="brewer.PuRd6">brewer.PuRd6</option><option value="brewer.PuRd7">brewer.PuRd7</option><option value="brewer.PuRd8">brewer.PuRd8</option><option value="brewer.PuRd9">brewer.PuRd9</option><option value="brewer.OrRd3">brewer.OrRd3</option><option value="brewer.OrRd4">brewer.OrRd4</option><option value="brewer.OrRd5">brewer.OrRd5</option><option value="brewer.OrRd6">brewer.OrRd6</option><option value="brewer.OrRd7">brewer.OrRd7</option><option value="brewer.OrRd8">brewer.OrRd8</option><option value="brewer.OrRd9">brewer.OrRd9</option><option value="brewer.YlOrRd3">brewer.YlOrRd3</option><option value="brewer.YlOrRd4">brewer.YlOrRd4</option><option value="brewer.YlOrRd5">brewer.YlOrRd5</option><option value="brewer.YlOrRd6">brewer.YlOrRd6</option><option value="brewer.YlOrRd7">brewer.YlOrRd7</option><option value="brewer.YlOrRd8">brewer.YlOrRd8</option><option value="brewer.YlOrRd9">brewer.YlOrRd9</option><option value="brewer.YlOrBr3">brewer.YlOrBr3</option><option value="brewer.YlOrBr4">brewer.YlOrBr4</option><option value="brewer.YlOrBr5">brewer.YlOrBr5</option><option value="brewer.YlOrBr6">brewer.YlOrBr6</option><option value="brewer.YlOrBr7">brewer.YlOrBr7</option><option value="brewer.YlOrBr8">brewer.YlOrBr8</option><option value="brewer.YlOrBr9">brewer.YlOrBr9</option><option value="brewer.Purples3">brewer.Purples3</option><option value="brewer.Purples4">brewer.Purples4</option><option value="brewer.Purples5">brewer.Purples5</option><option value="brewer.Purples6">brewer.Purples6</option><option value="brewer.Purples7">brewer.Purples7</option><option value="brewer.Purples8">brewer.Purples8</option><option value="brewer.Purples9">brewer.Purples9</option><option value="brewer.Blues3">brewer.Blues3</option><option value="brewer.Blues4">brewer.Blues4</option><option value="brewer.Blues5">brewer.Blues5</option><option value="brewer.Blues6">brewer.Blues6</option><option value="brewer.Blues7">brewer.Blues7</option><option value="brewer.Blues8">brewer.Blues8</option><option value="brewer.Blues9">brewer.Blues9</option><option value="brewer.Greens3">brewer.Greens3</option><option value="brewer.Greens4">brewer.Greens4</option><option value="brewer.Greens5">brewer.Greens5</option><option value="brewer.Greens6">brewer.Greens6</option><option value="brewer.Greens7">brewer.Greens7</option><option value="brewer.Greens8">brewer.Greens8</option><option value="brewer.Greens9">brewer.Greens9</option><option value="brewer.Oranges3">brewer.Oranges3</option><option value="brewer.Oranges4">brewer.Oranges4</option><option value="brewer.Oranges5">brewer.Oranges5</option><option value="brewer.Oranges6">brewer.Oranges6</option><option value="brewer.Oranges7">brewer.Oranges7</option><option value="brewer.Oranges8">brewer.Oranges8</option><option value="brewer.Oranges9">brewer.Oranges9</option><option value="brewer.Reds3">brewer.Reds3</option><option value="brewer.Reds4">brewer.Reds4</option><option value="brewer.Reds5">brewer.Reds5</option><option value="brewer.Reds6">brewer.Reds6</option><option value="brewer.Reds7">brewer.Reds7</option><option value="brewer.Reds8">brewer.Reds8</option><option value="brewer.Reds9">brewer.Reds9</option><option value="brewer.Greys3">brewer.Greys3</option><option value="brewer.Greys4">brewer.Greys4</option><option value="brewer.Greys5">brewer.Greys5</option><option value="brewer.Greys6">brewer.Greys6</option><option value="brewer.Greys7">brewer.Greys7</option><option value="brewer.Greys8">brewer.Greys8</option><option value="brewer.Greys9">brewer.Greys9</option><option value="brewer.PuOr3">brewer.PuOr3</option><option value="brewer.PuOr4">brewer.PuOr4</option><option value="brewer.PuOr5">brewer.PuOr5</option><option value="brewer.PuOr6">brewer.PuOr6</option><option value="brewer.PuOr7">brewer.PuOr7</option><option value="brewer.PuOr8">brewer.PuOr8</option><option value="brewer.PuOr9">brewer.PuOr9</option><option value="brewer.PuOr10">brewer.PuOr10</option><option value="brewer.PuOr11">brewer.PuOr11</option><option value="brewer.BrBG3">brewer.BrBG3</option><option value="brewer.BrBG4">brewer.BrBG4</option><option value="brewer.BrBG5">brewer.BrBG5</option><option value="brewer.BrBG6">brewer.BrBG6</option><option value="brewer.BrBG7">brewer.BrBG7</option><option value="brewer.BrBG8">brewer.BrBG8</option><option value="brewer.BrBG9">brewer.BrBG9</option><option value="brewer.BrBG10">brewer.BrBG10</option><option value="brewer.BrBG11">brewer.BrBG11</option><option value="brewer.PRGn3">brewer.PRGn3</option><option value="brewer.PRGn4">brewer.PRGn4</option><option value="brewer.PRGn5">brewer.PRGn5</option><option value="brewer.PRGn6">brewer.PRGn6</option><option value="brewer.PRGn7">brewer.PRGn7</option><option value="brewer.PRGn8">brewer.PRGn8</option><option value="brewer.PRGn9">brewer.PRGn9</option><option value="brewer.PRGn10">brewer.PRGn10</option><option value="brewer.PRGn11">brewer.PRGn11</option><option value="brewer.PiYG3">brewer.PiYG3</option><option value="brewer.PiYG4">brewer.PiYG4</option><option value="brewer.PiYG5">brewer.PiYG5</option><option value="brewer.PiYG6">brewer.PiYG6</option><option value="brewer.PiYG7">brewer.PiYG7</option><option value="brewer.PiYG8">brewer.PiYG8</option><option value="brewer.PiYG9">brewer.PiYG9</option><option value="brewer.PiYG10">brewer.PiYG10</option><option value="brewer.PiYG11">brewer.PiYG11</option><option value="brewer.RdBu3">brewer.RdBu3</option><option value="brewer.RdBu4">brewer.RdBu4</option><option value="brewer.RdBu5">brewer.RdBu5</option><option value="brewer.RdBu6">brewer.RdBu6</option><option value="brewer.RdBu7">brewer.RdBu7</option><option value="brewer.RdBu8">brewer.RdBu8</option><option value="brewer.RdBu9">brewer.RdBu9</option><option value="brewer.RdBu10">brewer.RdBu10</option><option value="brewer.RdBu11">brewer.RdBu11</option><option value="brewer.RdGy3">brewer.RdGy3</option><option value="brewer.RdGy4">brewer.RdGy4</option><option value="brewer.RdGy5">brewer.RdGy5</option><option value="brewer.RdGy6">brewer.RdGy6</option><option value="brewer.RdGy7">brewer.RdGy7</option><option value="brewer.RdGy8">brewer.RdGy8</option><option value="brewer.RdGy9">brewer.RdGy9</option><option value="brewer.RdGy10">brewer.RdGy10</option><option value="brewer.RdGy11">brewer.RdGy11</option><option value="brewer.RdYlBu3">brewer.RdYlBu3</option><option value="brewer.RdYlBu4">brewer.RdYlBu4</option><option value="brewer.RdYlBu5">brewer.RdYlBu5</option><option value="brewer.RdYlBu6">brewer.RdYlBu6</option><option value="brewer.RdYlBu7">brewer.RdYlBu7</option><option value="brewer.RdYlBu8">brewer.RdYlBu8</option><option value="brewer.RdYlBu9">brewer.RdYlBu9</option><option value="brewer.RdYlBu10">brewer.RdYlBu10</option><option value="brewer.RdYlBu11">brewer.RdYlBu11</option><option value="brewer.Spectral3">brewer.Spectral3</option><option value="brewer.Spectral4">brewer.Spectral4</option><option value="brewer.Spectral5">brewer.Spectral5</option><option value="brewer.Spectral6">brewer.Spectral6</option><option value="brewer.Spectral7">brewer.Spectral7</option><option value="brewer.Spectral8">brewer.Spectral8</option><option value="brewer.Spectral9">brewer.Spectral9</option><option value="brewer.Spectral10">brewer.Spectral10</option><option value="brewer.Spectral11">brewer.Spectral11</option><option value="brewer.RdYlGn3">brewer.RdYlGn3</option><option value="brewer.RdYlGn4">brewer.RdYlGn4</option><option value="brewer.RdYlGn5">brewer.RdYlGn5</option><option value="brewer.RdYlGn6">brewer.RdYlGn6</option><option value="brewer.RdYlGn7">brewer.RdYlGn7</option><option value="brewer.RdYlGn8">brewer.RdYlGn8</option><option value="brewer.RdYlGn9">brewer.RdYlGn9</option><option value="brewer.RdYlGn10">brewer.RdYlGn10</option><option value="brewer.RdYlGn11">brewer.RdYlGn11</option><option value="brewer.Accent3">brewer.Accent3</option><option value="brewer.Accent4">brewer.Accent4</option><option value="brewer.Accent5">brewer.Accent5</option><option value="brewer.Accent6">brewer.Accent6</option><option value="brewer.Accent7">brewer.Accent7</option><option value="brewer.Accent8">brewer.Accent8</option><option value="brewer.DarkTwo3">brewer.DarkTwo3</option><option value="brewer.DarkTwo4">brewer.DarkTwo4</option><option value="brewer.DarkTwo5">brewer.DarkTwo5</option><option value="brewer.DarkTwo6">brewer.DarkTwo6</option><option value="brewer.DarkTwo7">brewer.DarkTwo7</option><option value="brewer.DarkTwo8">brewer.DarkTwo8</option><option value="brewer.Paired3">brewer.Paired3</option><option value="brewer.Paired4">brewer.Paired4</option><option value="brewer.Paired5">brewer.Paired5</option><option value="brewer.Paired6">brewer.Paired6</option><option value="brewer.Paired7">brewer.Paired7</option><option value="brewer.Paired8">brewer.Paired8</option><option value="brewer.Paired9">brewer.Paired9</option><option value="brewer.Paired10">brewer.Paired10</option><option value="brewer.Paired11">brewer.Paired11</option><option value="brewer.Paired12">brewer.Paired12</option><option value="brewer.PastelOne3">brewer.PastelOne3</option><option value="brewer.PastelOne4">brewer.PastelOne4</option><option value="brewer.PastelOne5">brewer.PastelOne5</option><option value="brewer.PastelOne6">brewer.PastelOne6</option><option value="brewer.PastelOne7">brewer.PastelOne7</option><option value="brewer.PastelOne8">brewer.PastelOne8</option><option value="brewer.PastelOne9">brewer.PastelOne9</option><option value="brewer.PastelTwo3">brewer.PastelTwo3</option><option value="brewer.PastelTwo4">brewer.PastelTwo4</option><option value="brewer.PastelTwo5">brewer.PastelTwo5</option><option value="brewer.PastelTwo6">brewer.PastelTwo6</option><option value="brewer.PastelTwo7">brewer.PastelTwo7</option><option value="brewer.PastelTwo8">brewer.PastelTwo8</option><option value="brewer.SetOne3">brewer.SetOne3</option><option value="brewer.SetOne4">brewer.SetOne4</option><option value="brewer.SetOne5">brewer.SetOne5</option><option value="brewer.SetOne6">brewer.SetOne6</option><option value="brewer.SetOne7">brewer.SetOne7</option><option value="brewer.SetOne8">brewer.SetOne8</option><option value="brewer.SetOne9">brewer.SetOne9</option><option value="brewer.SetTwo3">brewer.SetTwo3</option><option value="brewer.SetTwo4">brewer.SetTwo4</option><option value="brewer.SetTwo5">brewer.SetTwo5</option><option value="brewer.SetTwo6">brewer.SetTwo6</option><option value="brewer.SetTwo7">brewer.SetTwo7</option><option value="brewer.SetTwo8">brewer.SetTwo8</option><option value="brewer.SetThree3">brewer.SetThree3</option><option value="brewer.SetThree4">brewer.SetThree4</option><option value="brewer.SetThree5">brewer.SetThree5</option><option value="brewer.SetThree6">brewer.SetThree6</option><option value="brewer.SetThree7">brewer.SetThree7</option><option value="brewer.SetThree8">brewer.SetThree8</option><option value="brewer.SetThree9">brewer.SetThree9</option><option value="brewer.SetThree10">brewer.SetThree10</option><option value="brewer.SetThree11">brewer.SetThree11</option><option value="brewer.SetThree12">brewer.SetThree12</option><option value="office.Adjacency6">office.Adjacency6</option><option value="office.Advantage6">office.Advantage6</option><option value="office.Angles6">office.Angles6</option><option value="office.Apex6">office.Apex6</option><option value="office.Apothecary6">office.Apothecary6</option><option value="office.Aspect6">office.Aspect6</option><option value="office.Atlas6">office.Atlas6</option><option value="office.Austin6">office.Austin6</option><option value="office.Badge6">office.Badge6</option><option value="office.Banded6">office.Banded6</option><option value="office.Basis6">office.Basis6</option><option value="office.Berlin6">office.Berlin6</option><option value="office.BlackTie6">office.BlackTie6</option><option value="office.Blue6">office.Blue6</option><option value="office.BlueGreen6">office.BlueGreen6</option><option value="office.BlueII6">office.BlueII6</option><option value="office.BlueRed6">office.BlueRed6</option><option value="office.BlueWarm6">office.BlueWarm6</option><option value="office.Breeze6">office.Breeze6</option><option value="office.Capital6">office.Capital6</option><option value="office.Celestial6">office.Celestial6</option><option value="office.Circuit6">office.Circuit6</option><option value="office.Civic6">office.Civic6</option><option value="office.Clarity6">office.Clarity6</option><option value="office.Codex6">office.Codex6</option><option value="office.Composite6">office.Composite6</option><option value="office.Concourse6">office.Concourse6</option><option value="office.Couture6">office.Couture6</option><option value="office.Crop6">office.Crop6</option><option value="office.Damask6">office.Damask6</option><option value="office.Depth6">office.Depth6</option><option value="office.Dividend6">office.Dividend6</option><option value="office.Droplet6">office.Droplet6</option><option value="office.Elemental6">office.Elemental6</option><option value="office.Equity6">office.Equity6</option><option value="office.Essential6">office.Essential6</option><option value="office.Excel16">office.Excel16</option><option value="office.Executive6">office.Executive6</option><option value="office.Exhibit6">office.Exhibit6</option><option value="office.Expo6">office.Expo6</option><option value="office.Facet6">office.Facet6</option><option value="office.Feathered6">office.Feathered6</option><option value="office.Flow6">office.Flow6</option><option value="office.Focus6">office.Focus6</option><option value="office.Folio6">office.Folio6</option><option value="office.Formal6">office.Formal6</option><option value="office.Forte6">office.Forte6</option><option value="office.Foundry6">office.Foundry6</option><option value="office.Frame6">office.Frame6</option><option value="office.Gallery6">office.Gallery6</option><option value="office.Genesis6">office.Genesis6</option><option value="office.Grayscale6">office.Grayscale6</option><option value="office.Green6">office.Green6</option><option value="office.GreenYellow6">office.GreenYellow6</option><option value="office.Grid6">office.Grid6</option><option value="office.Habitat6">office.Habitat6</option><option value="office.Hardcover6">office.Hardcover6</option><option value="office.Headlines6">office.Headlines6</option><option value="office.Horizon6">office.Horizon6</option><option value="office.Infusion6">office.Infusion6</option><option value="office.Inkwell6">office.Inkwell6</option><option value="office.Inspiration6">office.Inspiration6</option><option value="office.Integral6">office.Integral6</option><option value="office.Ion6">office.Ion6</option><option value="office.IonBoardroom6">office.IonBoardroom6</option><option value="office.Kilter6">office.Kilter6</option><option value="office.Madison6">office.Madison6</option><option value="office.MainEvent6">office.MainEvent6</option><option value="office.Marquee6">office.Marquee6</option><option value="office.Median6">office.Median6</option><option value="office.Mesh6">office.Mesh6</option><option value="office.Metail6">office.Metail6</option><option value="office.Metro6">office.Metro6</option><option value="office.Metropolitan6">office.Metropolitan6</option><option value="office.Module6">office.Module6</option><option value="office.NewsPrint6">office.NewsPrint6</option><option value="office.Office6">office.Office6</option><option value="office.OfficeClassic6">office.OfficeClassic6</option><option value="office.Opulent6">office.Opulent6</option><option value="office.Orange6">office.Orange6</option><option value="office.OrangeRed6">office.OrangeRed6</option><option value="office.Orbit6">office.Orbit6</option><option value="office.Organic6">office.Organic6</option><option value="office.Oriel6">office.Oriel6</option><option value="office.Origin6">office.Origin6</option><option value="office.Paper6">office.Paper6</option><option value="office.Parallax6">office.Parallax6</option><option value="office.Parcel6">office.Parcel6</option><option value="office.Perception6">office.Perception6</option><option value="office.Perspective6">office.Perspective6</option><option value="office.Pixel6">office.Pixel6</option><option value="office.Plaza6">office.Plaza6</option><option value="office.Precedent6">office.Precedent6</option><option value="office.Pushpin6">office.Pushpin6</option><option value="office.Quotable6">office.Quotable6</option><option value="office.Red6">office.Red6</option><option value="office.RedOrange6">office.RedOrange6</option><option value="office.RedViolet6">office.RedViolet6</option><option value="office.Retrospect6">office.Retrospect6</option><option value="office.Revolution6">office.Revolution6</option><option value="office.Saddle6">office.Saddle6</option><option value="office.Savon6">office.Savon6</option><option value="office.Sketchbook6">office.Sketchbook6</option><option value="office.Sky6">office.Sky6</option><option value="office.Slate6">office.Slate6</option><option value="office.Slice6">office.Slice6</option><option value="office.Slipstream6">office.Slipstream6</option><option value="office.SOHO6">office.SOHO6</option><option value="office.Solstice6">office.Solstice6</option><option value="office.Spectrum6">office.Spectrum6</option><option value="office.Story6">office.Story6</option><option value="office.Studio6">office.Studio6</option><option value="office.Summer6">office.Summer6</option><option value="office.Technic6">office.Technic6</option><option value="office.Thatch6">office.Thatch6</option><option value="office.Tradition6">office.Tradition6</option><option value="office.Travelogue6">office.Travelogue6</option><option value="office.Trek6">office.Trek6</option><option value="office.Twilight6">office.Twilight6</option><option value="office.Urban6">office.Urban6</option><option value="office.UrbanPop6">office.UrbanPop6</option><option value="office.VaporTrail6">office.VaporTrail6</option><option value="office.Venture6">office.Venture6</option><option value="office.Verve6">office.Verve6</option><option value="office.View6">office.View6</option><option value="office.Violet6">office.Violet6</option><option value="office.VioletII6">office.VioletII6</option><option value="office.Waveform6">office.Waveform6</option><option value="office.Wisp6">office.Wisp6</option><option value="office.WoodType6">office.WoodType6</option><option value="office.Yellow6">office.Yellow6</option><option value="office.YellowOrange6">office.YellowOrange6</option><option value="tableau.Tableau10">tableau.Tableau10</option><option value="tableau.Tableau20">tableau.Tableau20</option><option value="tableau.ColorBlind10">tableau.ColorBlind10</option><option value="tableau.SeattleGrays5">tableau.SeattleGrays5</option><option value="tableau.Traffic9">tableau.Traffic9</option><option value="tableau.MillerStone11">tableau.MillerStone11</option><option value="tableau.SuperfishelStone10">tableau.SuperfishelStone10</option><option value="tableau.NurielStone9">tableau.NurielStone9</option><option value="tableau.JewelBright9">tableau.JewelBright9</option><option value="tableau.Summer8">tableau.Summer8</option><option value="tableau.Winter10">tableau.Winter10</option><option value="tableau.GreenOrangeTeal12">tableau.GreenOrangeTeal12</option><option value="tableau.RedBlueBrown12">tableau.RedBlueBrown12</option><option value="tableau.PurplePinkGray12">tableau.PurplePinkGray12</option><option value="tableau.HueCircle19">tableau.HueCircle19</option><option value="tableau.OrangeBlue7">tableau.OrangeBlue7</option><option value="tableau.RedGreen7">tableau.RedGreen7</option><option value="tableau.GreenBlue7">tableau.GreenBlue7</option><option value="tableau.RedBlue7">tableau.RedBlue7</option><option value="tableau.RedBlack7">tableau.RedBlack7</option><option value="tableau.GoldPurple7">tableau.GoldPurple7</option><option value="tableau.RedGreenGold7">tableau.RedGreenGold7</option><option value="tableau.SunsetSunrise7">tableau.SunsetSunrise7</option><option value="tableau.OrangeBlueWhite7">tableau.OrangeBlueWhite7</option><option value="tableau.RedGreenWhite7">tableau.RedGreenWhite7</option><option value="tableau.GreenBlueWhite7">tableau.GreenBlueWhite7</option><option value="tableau.RedBlueWhite7">tableau.RedBlueWhite7</option><option value="tableau.RedBlackWhite7">tableau.RedBlackWhite7</option><option value="tableau.OrangeBlueLight7">tableau.OrangeBlueLight7</option><option value="tableau.Temperature7">tableau.Temperature7</option><option value="tableau.BlueGreen7">tableau.BlueGreen7</option><option value="tableau.BlueLight7">tableau.BlueLight7</option><option value="tableau.OrangeLight7">tableau.OrangeLight7</option><option value="tableau.Blue20">tableau.Blue20</option><option value="tableau.Orange20">tableau.Orange20</option><option value="tableau.Green20">tableau.Green20</option><option value="tableau.Red20">tableau.Red20</option><option value="tableau.Purple20">tableau.Purple20</option><option value="tableau.Brown20">tableau.Brown20</option><option value="tableau.Gray20">tableau.Gray20</option><option value="tableau.GrayWarm20">tableau.GrayWarm20</option><option value="tableau.BlueTeal20">tableau.BlueTeal20</option><option value="tableau.OrangeGold20">tableau.OrangeGold20</option><option value="tableau.GreenGold20">tableau.GreenGold20</option><option value="tableau.RedGold21">tableau.RedGold21</option><option value="tableau.Classic10">tableau.Classic10</option><option value="tableau.ClassicMedium10">tableau.ClassicMedium10</option><option value="tableau.ClassicLight10">tableau.ClassicLight10</option><option value="tableau.Classic20">tableau.Classic20</option><option value="tableau.ClassicGray5">tableau.ClassicGray5</option><option value="tableau.ClassicColorBlind10" selected="">tableau.ClassicColorBlind10</option><option value="tableau.ClassicTrafficLight9">tableau.ClassicTrafficLight9</option><option value="tableau.ClassicPurpleGray6">tableau.ClassicPurpleGray6</option><option value="tableau.ClassicPurpleGray12">tableau.ClassicPurpleGray12</option><option value="tableau.ClassicGreenOrange6">tableau.ClassicGreenOrange6</option><option value="tableau.ClassicGreenOrange12">tableau.ClassicGreenOrange12</option><option value="tableau.ClassicBlueRed6">tableau.ClassicBlueRed6</option><option value="tableau.ClassicBlueRed12">tableau.ClassicBlueRed12</option><option value="tableau.ClassicCyclic13">tableau.ClassicCyclic13</option><option value="tableau.ClassicGreen7">tableau.ClassicGreen7</option><option value="tableau.ClassicGray13">tableau.ClassicGray13</option><option value="tableau.ClassicBlue7">tableau.ClassicBlue7</option><option value="tableau.ClassicRed9">tableau.ClassicRed9</option><option value="tableau.ClassicOrange7">tableau.ClassicOrange7</option><option value="tableau.ClassicAreaRed11">tableau.ClassicAreaRed11</option><option value="tableau.ClassicAreaGreen11">tableau.ClassicAreaGreen11</option><option value="tableau.ClassicAreaBrown11">tableau.ClassicAreaBrown11</option><option value="tableau.ClassicRedGreen11">tableau.ClassicRedGreen11</option><option value="tableau.ClassicRedBlue11">tableau.ClassicRedBlue11</option><option value="tableau.ClassicRedBlack11">tableau.ClassicRedBlack11</option><option value="tableau.ClassicAreaRedGreen21">tableau.ClassicAreaRedGreen21</option><option value="tableau.ClassicOrangeBlue13">tableau.ClassicOrangeBlue13</option><option value="tableau.ClassicGreenBlue11">tableau.ClassicGreenBlue11</option><option value="tableau.ClassicRedWhiteGreen11">tableau.ClassicRedWhiteGreen11</option><option value="tableau.ClassicRedWhiteBlack11">tableau.ClassicRedWhiteBlack11</option><option value="tableau.ClassicOrangeWhiteBlue11">tableau.ClassicOrangeWhiteBlue11</option><option value="tableau.ClassicRedWhiteBlackLight10">tableau.ClassicRedWhiteBlackLight10</option><option value="tableau.ClassicOrangeWhiteBlueLight11">tableau.ClassicOrangeWhiteBlueLight11</option><option value="tableau.ClassicRedWhiteGreenLight11">tableau.ClassicRedWhiteGreenLight11</option><option value="tableau.ClassicRedGreenLight11">tableau.ClassicRedGreenLight11</option>
+              </select>
+            </div>
           </div>
         </div>
 
       </div>
+
+
     </section>
   </div>
   <nav>
     <section>
-      <strong>Countries</strong>
-      <div id="menu-countries" class="menu-list"></div>
+      <strong>Countries</strong> <a href="#" class="clear-data" data-group="countries">clear</a>
+      <div class="menu-list">
+        <div id="menu-countries" />
+      </div>
     </section>
     <section>
-      <strong>States</strong>
-      <div id="menu-states" class="menu-list"></div>
+      <strong>States</strong> <a href="#" class="clear-data" data-group="states">clear</a>
+      <div class="menu-list">
+        <div id="menu-states" class="menu-list" />
+      </div>
     </section>
     <section>
-      <strong>US Counties</strong>
-      <div id="menu-counties" class="menu-list"></div>
+      <strong>US Counties</strong> <a href="#" class="clear-data" data-group="counties">clear</a>
+      <div class="menu-list">
+        <div id="menu-counties" class="menu-list"/>
+      </div>
     </section>
   </nav>
 </main>
