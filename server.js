@@ -36,6 +36,17 @@ const options = {
   subregions: [],
 };
 
+const regionsAustralia = {
+  "ACT": "Australian Capital Territory",
+  "NSW": "New South Wales",
+  "NT": "Northern Territory",
+  "QLD": "Queensland",
+  "SA": "South Australia",
+  "TAS": "Tasmania",
+  "VIC": "Victoria",
+  "WA": "Western Australia",
+}
+
 const regionsCanada = {
   "AB": "Alberta",
   "BC": "British Columbia",
@@ -261,9 +272,9 @@ const prepareTodayReportResponse = async(todayResponse) => {
   };
 
   // here we have the same problem as before with generate timeseries:
-  // for US, Canada, China there are only state and province numbers, not total rollup numbers for those countries
+  // for US, Canada, Australia, China there are only state and province numbers, not total rollup numbers for those countries
   // so we will need to tally them as we loop
-  const countriesToBeTallied = ['US', 'Canada', 'China'];
+  const countriesToBeTallied = ['US', 'Canada', 'Australia', 'China'];
 
   // the ESRI payload only contains updated info for country and state/province, not county
   for (country of menu.countries) {
@@ -333,8 +344,14 @@ const generateMenu = async() => {
 
   const countries = v2Rows.filter(item => item[0] === '').map(item => item[1]);
 
-  // china has to be manually added
-  // why? because JH V2 report does not have a single row with rollup of China data
+  // Australia has to be manually added
+  // why? because JH V2 report does not have a single row with rollup of Australia data
+  // find Colombia and insert right before
+  const indexToInsertAustralia = countries.findIndex(item => item === 'Austria');
+  countries.splice(indexToInsertAustralia, 0, 'Australia');
+
+  // Canada has to be manually added
+  // why? because JH V2 report does not have a single row with rollup of Canada data
   // find Colombia and insert right before
   const indexToInsertCanada = countries.findIndex(item => item === 'Central African Republic');
   countries.splice(indexToInsertCanada, 0, 'Canada');
@@ -348,12 +365,14 @@ const generateMenu = async() => {
   // get a list of all available states by reading the v1 global data file
   const {rows: v1Rows} = await csvParser.readGlobalCategoryDatafile(null, 'Confirmed', 'v1');
 
+  const allowedAustraliaProvinces = Object.values(regionsAustralia);
+  const australiaProvinces = v1Rows.filter(item => item[1] === 'Australia' && item[0] !== '' && allowedAustraliaProvinces.includes(item[0]) ).map(item => item[0]);
   const allowedCanadaProvinces = Object.values(regionsCanada);
   const canadaProvinces = v1Rows.filter(item => item[1] === 'Canada' && item[0] !== '' && allowedCanadaProvinces.includes(item[0]) ).map(item => item[0]);
   const allowedStates = Object.values(regionsUSA);
   const USstates = v1Rows.filter(item => item[1] === 'US' && item[0] !== '' && allowedStates.includes(item[0]) ).map(item => item[0]);
 
-  const states = USstates.concat(canadaProvinces);
+  const states = USstates.concat(canadaProvinces, australiaProvinces);
 
   // get a list of all available counties by looking at the earliest daily report
   const {rows: dailyReportRows, columns: dailyReportColumns} = await csvParser.readDailyReport();
@@ -426,6 +445,28 @@ const generateTimeseriesFile = async() => {
     if (!timeseriesDays.length) {
       const [columnRegion, columnCountry, columnLat, columnLong, ...restOfColumns] = allColumns;
       timeseriesDays = restOfColumns;
+    }
+
+
+    // Australia is a special case
+    // there is no single row in the V2 report for Australia as a whole
+    // as a result, we have to tally up the provinces in Australia for that country's total :\
+    const australiaProvinceRows = allRows.filter(item => item[0] !== '' && item[1] === 'Australia');
+    let australiaTimeseries; // start undefined
+    for(const australiaProvinceRow of australiaProvinceRows) {
+      const [region, countryCode, lat, long, ...timeseries] = australiaProvinceRow;
+      const timeseriesNumeric = timeseries.map(item => Number(item));
+
+      if (!australiaTimeseries) {
+        // use the first row to initialize the baseline timeseries
+        australiaTimeseries = timeseriesNumeric;
+      } else {
+        // every subsequent row, just add to to the baseline row
+        timeseriesNumeric.forEach((item, index) => australiaTimeseries[index] += item);
+      }
+    }
+    if (response.timeseries.countries['Australia']){
+      response.timeseries.countries['Australia'].timeseriesByCategory[category] = australiaTimeseries;
     }
 
     // Canada is a special case
@@ -510,12 +551,17 @@ const generateTimeseriesFile = async() => {
       .filter(item => item[1] === 'US' && item[0] !== '')
       .filter(item => allowedStates.includes(item[0]));
 
+    const allowedAustraliaProvinces = Object.values(regionsAustralia);
+    const australiaProvinceRows = v1Rows
+      .filter(item => item[1] === 'Australia' && item[0] !== '')
+      .filter(item => allowedAustraliaProvinces.includes(item[0]));
+
     const allowedCanadaProvinces = Object.values(regionsCanada);
     const canadaProvinceRows = v1Rows
       .filter(item => item[1] === 'Canada' && item[0] !== '')
       .filter(item => allowedCanadaProvinces.includes(item[0]));
 
-    const stateRows = USStateRows.concat(canadaProvinceRows);
+    const stateRows = USStateRows.concat(canadaProvinceRows, australiaProvinceRows);
 
     for (stateRow of stateRows) {
 
@@ -617,7 +663,7 @@ const generateTimeseriesFile = async() => {
 
       const timeseriesArrayIndexToUpdate = daysFromJan22;
 
-      const dailyRows = dailyFileRows.filter(item => item[3] === 'US' || item[3] === 'Canada');
+      const dailyRows = dailyFileRows.filter(item => item[3] === 'US' || item[3] === 'Canada' || item[3] === 'Australia');
 
       // use this to keep tally by for each state
       const stateTallies = {};
@@ -662,8 +708,16 @@ const generateTimeseriesFile = async() => {
             response.timeseries.counties[countyName].timeseriesByCategory['Confirmed'][timeseriesArrayIndexToUpdate] = countyConfirmedCount;
             response.timeseries.counties[countyName].timeseriesByCategory['Deaths'][timeseriesArrayIndexToUpdate] = countyDeathsCount;
           }
-        } else if (Country_Region === 'Canada') {
+        } else if (Country_Region === 'Australia') {
 
+          const allowedAustraliaProvinces = Object.values(regionsAustralia);
+          // add to county cumulative
+          if (Province_State && allowedAustraliaProvinces.includes(Province_State) && response.timeseries.states[Province_State]) {
+            response.timeseries.states[Province_State].timeseriesByCategory['Confirmed'][timeseriesArrayIndexToUpdate] = countyConfirmedCount;
+            response.timeseries.states[Province_State].timeseriesByCategory['Deaths'][timeseriesArrayIndexToUpdate] = countyDeathsCount;
+          }
+
+        } else if (Country_Region === 'Canada') {
 
           const allowedCanadaProvinces = Object.values(regionsCanada);
           // add to county cumulative
@@ -734,10 +788,7 @@ downloadHistoricalData()
     app.listen(port, () => console.log(`
       Server is now ready to serve data, listening on port ${port}.
       To see charts, please open your web browser to http://localhost:3000
-      
+
       Ctrl-C to exit server
     `));
   });
-
-
-
