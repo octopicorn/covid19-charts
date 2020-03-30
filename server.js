@@ -11,6 +11,13 @@ moment.prototype.snapToDayStart = function(){
     .set('millisecond', 0);
   return this;
 }
+moment.prototype.snapToDayEnd = function(){
+  this.set('hour', 23)
+    .set('minute', 59)
+    .set('second', 59)
+    .set('millisecond', 0);
+  return this;
+}
 
 // determine today's date in UTC, snap to beginning of day at 00:00:00.000 UTC
 const dateToday = moment.utc()
@@ -111,29 +118,6 @@ function prepareOptions (req) {
 
   console.log('querystring', req.query)
 
-  // countries
-  let countries = req.query.countries;
-  if (!Array.isArray(countries)){
-    countries = [countries];
-  }
-  options.countries = countries;
-
-  // regions
-  let regions = req.query.regions;
-  if (!Array.isArray(regions)){
-    regions = [regions];
-  }
-  options.regions = regions;
-
-  // subRegions
-  let subRegions = req.query.subRegions;
-  if (!Array.isArray(subRegions)){
-    subRegions = [subRegions];
-  }
-  options.subRegions = subRegions;
-
-  console.log('options', options)
-  return options;
 }
 
 const downloadHistoricalData = async() => {
@@ -220,8 +204,8 @@ async function getTodayData () {
   console.log('------------');
   try {
     console.log(`Fetching today's latest ${categories.join(', ')} by country and region...`);
-    todayData = await api.fetchDataToday();
-
+    const todayResponse = await api.fetchDataToday();
+    return todayResponse;
     // const foo = todayData.features.filter(item => item.attributes.Country_Region === 'US')
     // console.info(foo)
   } catch (err) {
@@ -229,307 +213,117 @@ async function getTodayData () {
   }
 }
 
-function parseTodayData(country) {
-  let countryDataToday;
-
-  if (country === 'US'){
-
-    const countryRegions = todayData.features.filter(item => item.attributes.Country_Region === 'US');
-    let countConfirmed = 0;
-    let countDeaths = 0;
-    for(regionFeature of countryRegions){
-      countConfirmed += regionFeature.attributes['Confirmed'];
-      countDeaths += regionFeature.attributes['Deaths'];
-    }
-    countryDataToday = {
-      'Confirmed': countConfirmed,
-      'Deaths': countDeaths,
-    };
-
-  } else {
-
-    const countryFeature = todayData.features.find(item => {
-      return item.attributes.Country_Region === country && item.attributes.Province_State === null;
-    });
-    countryDataToday = {
-      'Confirmed': countryFeature.attributes['Confirmed'],
-      'Deaths': countryFeature.attributes['Deaths'],
-    };
-  }
-
-  return countryDataToday;
-}
-
-const prepareReportData = async() => {
+const prepareTodayReportResponse = async(todayResponse) => {
 
   console.log()
   console.log('Prepare report data...')
 
+  // read in the menu.json file
+  const menuPath = path.join(__dirname, 'public', 'menu.json');
+  var menuJSON = fs.readFileSync(menuPath, 'utf8');
+  const menu = JSON.parse(menuJSON);
+
+  // read in the timeseries.json file
+  const timeseriesPath = path.join(__dirname, 'public', 'timeseries.json');
+  var timeseriesJSON = fs.readFileSync(timeseriesPath, 'utf8');
+  const timeseries = JSON.parse(timeseriesJSON);
+  const {timeseriesDays} = timeseries;
+
+  // depending on what time of day we run this, we might be on the same day as the last column entry of
+  // historical data, in which case we replace it
+  // otherwise, we are on the next day after the end of the historical data, in which case, we append
+  const lastDateOfTimeseries = timeseriesDays[timeseriesDays.length - 1];
+  // assume end of reported historical timeseries is end of day in UTC on the date of last element in timeseries dates
+  const timeseriesEndDate = moment.utc(lastDateOfTimeseries, 'M/D/YY').snapToDayEnd();
+
+  let timeseriesIndexToUpdate;
+  const currentDateTime = moment.utc(); // get current date tiem in UTC
+  // how many hours have passed since the last automated report?
+  const diffBetweenTodayAndLatestReport = currentDateTime.diff(timeseriesEndDate, 'hours');
+
+  // if it's been an hour or more since the last report, we will append
+  if (diffBetweenTodayAndLatestReport > 1){
+    // we will append one more element to timeseries
+    timeseriesIndexToUpdate = timeseriesDays.length;
+  } else {
+    // we will replace the last element of timeseries
+    timeseriesIndexToUpdate = timeseriesDays.length - 1;
+  }
+
   const response = {
-    lastUpdate: Date.now().toString(),
-    timeseriesDays: [],
-    timeseries: []
+    lastUpdate: moment.utc().toISOString(),
+    timeseriesIndexToUpdate,
+    timeseriesDays,
+    timeseries: {
+      countries: {},
+      states: {},
+    },
   };
 
-  // get days since V1
+  // here we have the same problem as before with generate timeseries:
+  // for US, Canada, China there are only state and province numbers, not total rollup numbers for those countries
+  // so we will need to tally them as we loop
+  const countriesToBeTallied = ['US', 'Canada', 'China'];
 
-  let updateTodayMode = 'replace';
-  let columns = [];
-  for (country of options.countries) {
+  // the ESRI payload only contains updated info for country and state/province, not county
+  for (country of menu.countries) {
 
-    const countryDataObject = {
-      country,
-      timeseriesByCategory: {
-        'Confirmed': [],
-        'Deaths': [],
-      },
-    }
+    if (countriesToBeTallied.includes(country)) {
 
-    const categories = ['Confirmed', 'Deaths'];
+      let countryTallyConfirmed = 0;
+      let countryTallyRecovered = 0;
+      let countryTallyDeaths = 0;
 
-    // start with historical data, then add today's data at the very end to bring the last day's numbers up to date
-    for (category of categories) {
-      // use historical data to prepare response object, keyed by country
-      const {rows: allRows, columns: allColumns} = await csvParser.readGlobalCategoryDatafile(country, category, 'v2');
-      if (!columns.length){
-        const [columnRegion, columnCountry, columnLat, columnLong, ...restOfColumns] = allColumns;
-        columns = restOfColumns;
+      // loop through and collect states for each
+      const stateRows = todayResponse.features
+        .filter(item => item.attributes.Country_Region === country && item.attributes.Province_State !== null);
+      for (stateRow of stateRows) {
+
+        const stateName = stateRow.attributes.Province_State;
+
+        response.timeseries.states[stateName] = {
+          timeseriesByCategory: {
+            ['Confirmed']: stateRow.attributes['Confirmed'],
+            ['Recovered']: stateRow.attributes['Recovered'],
+            ['Deaths']: stateRow.attributes['Deaths']
+          },
+        };
+
+        // also keep a running sum of the country
+        countryTallyConfirmed += stateRow.attributes['Confirmed'];
+        countryTallyRecovered += stateRow.attributes['Recovered'];
+        countryTallyDeaths += stateRow.attributes['Deaths'];
       }
 
-      let rows = allRows;
-      // if (country === 'US') {
-      //   // for US rows, filter out rows that aren't states so we don't overcount redundant tallies
-      //   rows = rows.filter(item => !item[0] || Object.values(regionsUSA).includes(item[0]));
-      //   console.log(rows.length, 'rows left after filter')
-      //   // console.log(columns)
-      // }
+      // after done looping through state/province, we now have country count
+      response.timeseries.countries[country] = {
+        timeseriesByCategory: {
+          ['Confirmed']: countryTallyConfirmed,
+          ['Recovered']: countryTallyRecovered,
+          ['Deaths']: countryTallyDeaths,
+        },
+      };
 
-      if (options.splitByRegion) {
-
-        // if we are not showing breakdown by region, then the historical data
-        // is a complete record up until the present day
-
-        // use historical data to prepare response object, keyed by region
-
-        const countryDataObject = {
-          country: undefined,
-          region: undefined,
-          timeseriesByCategory: {},
-        }
-
-        let countryCategoryTimeseries = [];
-        for(const row of rows){
-          const [region, countryCode, lat, long, ...rowTimeseries] = row;
-
-          rowTimeseries.pop();
-          if (!countryCategoryTimeseries.length){
-            // first row, just pass through as baseline for timeseries
-            // every subsequent row will add to totals
-            countryCategoryTimeseries = rowTimeseries;
-            countryDataObject.country = countryCode;
-            countryDataObject.timeseriesByCategory[category] = countryCategoryTimeseries.map(datum => Number(datum));
-          } else {
-            // every subsequent row
-            rowTimeseries.forEach((dayCount, index) => {
-              countryDataObject.timeseriesByCategory[category][index] += Number(dayCount);
-            });
-          }
-        }
-
-        console.log('done parsing')
-        console.log(countryDataObject)
-
-      } else {
-
-        // all regions of country will be merged into one row
-        let countryCategoryTimeseries = [];
-        for (const row of rows) {
-          const [region, countryCode, lat, long, ...rowTimeseries] = row;
-
-          rowTimeseries.pop();
-          if (!countryCategoryTimeseries.length) {
-            // first row, just pass through as baseline for timeseries
-            // every subsequent row will add to totals
-            countryCategoryTimeseries = rowTimeseries;
-            countryDataObject.country = countryCode;
-            countryDataObject.timeseriesByCategory[category] = countryCategoryTimeseries.map(datum => Number(datum));
-          } else {
-            // every subsequent row
-            rowTimeseries.forEach((dayCount, index) => {
-              countryDataObject.timeseriesByCategory[category][index] += Number(dayCount);
-            });
-          }
-        }
-
-      }
-
-    }
-
-    // now catch up timeseries from today's up to the minute data
-    const lastDateOfTimeseries = columns[columns.length - 1];
-    const timeseriesEndDate = moment.utc(lastDateOfTimeseries, 'M/D/YY');
-
-    // depending on what time of day we run this, we might be on the same day as the last column entry of
-    // historical data, in which case we replace it
-    // otherwise, we are on the next day after the end of the historical data, in which case, we append
-
-    const diffBetweenTodayAndLatestReport = dateToday.diff(timeseriesEndDate, 'days');
-    if (diffBetweenTodayAndLatestReport > 0){
-      updateTodayMode = 'append';
     } else {
-      updateTodayMode = 'replace';
+
+      // just collect the country data point
+
+      const countryRow = todayResponse.features.find(item => item.attributes.Country_Region === country && item.attributes.Province_State === null);
+
+      response.timeseries.countries[country] = {
+        timeseriesByCategory: {
+          ['Confirmed']: countryRow.attributes['Confirmed'],
+          ['Recovered']: countryRow.attributes['Recovered'],
+          ['Deaths']: countryRow.attributes['Deaths']
+        },
+      };
     }
 
-    // console.log(dateToday.diff(timeseriesEndDate, 'days'), 'days diff between today and history data', updateTodayMode)
-
-    const countryDataToday = parseTodayData(country);
-
-    if (updateTodayMode === 'append') {
-
-      countryDataObject.timeseriesByCategory['Confirmed'].push(countryDataToday['Confirmed']);
-      countryDataObject.timeseriesByCategory['Deaths'].push(countryDataToday['Deaths']);
-
-    } else if (updateTodayMode === 'replace') {
-
-      const lengthConfirmedTimeline = countryDataObject.timeseriesByCategory['Confirmed'].length;
-      countryDataObject.timeseriesByCategory['Confirmed'][lengthConfirmedTimeline - 1] = countryDataToday['Confirmed'];
-
-      const lengthDeathsTimeline = countryDataObject.timeseriesByCategory['Deaths'].length;
-      countryDataObject.timeseriesByCategory['Deaths'][lengthDeathsTimeline - 1] = countryDataToday['Deaths'];
-
-    }
-
-    console.log('done parsing ', country, 'update mode was', updateTodayMode)
-    response.timeseries.push(countryDataObject);
   }
-
-  if (updateTodayMode === 'append') {
-    // add today to the columns
-    // console.log('add one day to timeseries columns')
-    columns.push(dateToday.format('M/D/YY'));
-  }
-
-  response.timeseriesDays = columns;
 
   return response;
 
 }
-
-// function countTodayUSA() {
-//   // generate group counts for USA
-//
-//   // filter number only for regions matching the known states list
-//   // this is done to avoid overcounting city numbers that are redundant with state numbers
-//   const states = {
-//     "AL": "Alabama",
-//     "AK": "Alaska",
-//     "AS": "American Samoa",
-//     "AZ": "Arizona",
-//     "AR": "Arkansas",
-//     "CA": "California",
-//     "CO": "Colorado",
-//     "CT": "Connecticut",
-//     "DE": "Delaware",
-//     "DC": "District Of Columbia",
-//     "FM": "Federated States Of Micronesia",
-//     "FL": "Florida",
-//     "GA": "Georgia",
-//     "GU": "Guam",
-//     "HI": "Hawaii",
-//     "ID": "Idaho",
-//     "IL": "Illinois",
-//     "IN": "Indiana",
-//     "IA": "Iowa",
-//     "KS": "Kansas",
-//     "KY": "Kentucky",
-//     "LA": "Louisiana",
-//     "ME": "Maine",
-//     "MH": "Marshall Islands",
-//     "MD": "Maryland",
-//     "MA": "Massachusetts",
-//     "MI": "Michigan",
-//     "MN": "Minnesota",
-//     "MS": "Mississippi",
-//     "MO": "Missouri",
-//     "MT": "Montana",
-//     "NE": "Nebraska",
-//     "NV": "Nevada",
-//     "NH": "New Hampshire",
-//     "NJ": "New Jersey",
-//     "NM": "New Mexico",
-//     "NY": "New York",
-//     "NC": "North Carolina",
-//     "ND": "North Dakota",
-//     "MP": "Northern Mariana Islands",
-//     "OH": "Ohio",
-//     "OK": "Oklahoma",
-//     "OR": "Oregon",
-//     "PW": "Palau",
-//     "PA": "Pennsylvania",
-//     "PR": "Puerto Rico",
-//     "RI": "Rhode Island",
-//     "SC": "South Carolina",
-//     "SD": "South Dakota",
-//     "TN": "Tennessee",
-//     "TX": "Texas",
-//     "UT": "Utah",
-//     "VT": "Vermont",
-//     "VI": "Virgin Islands",
-//     "VA": "Virginia",
-//     "WA": "Washington",
-//     "WV": "West Virginia",
-//     "WI": "Wisconsin",
-//     "WY": "Wyoming"
-//   }
-//   const stateNames = Object.values(states);
-//
-//   let confirmed = 0;
-//   let deaths = 0;
-//   // let recovered = 0;
-//
-//   todayData.features
-//     .filter(item => item.attributes.Country_Region === "US")
-//     .filter(item => stateNames.includes(item.attributes.Province_State))
-//     .forEach(item => {
-//
-//       const state = item.attributes.Province_State;
-//       todayUSARegions[state] = {
-//         'Confirmed': item.attributes['Confirmed'],
-//         'Deaths': item.attributes['Deaths'],
-//         // 'Recovered': item.attributes['Recovered'],
-//       };
-//
-//       confirmed += item.attributes['Confirmed'];
-//       deaths += item.attributes['Deaths'];
-//       // recovered += item.attributes['Recovered'];
-//     })
-//   ;
-//
-//   todayUSA = {
-//     'Confirmed': confirmed,
-//     'Deaths': deaths,
-//     // 'Recovered': recovered,
-//   }
-//
-//
-// }
-
-// function tallyTodayCountries() {
-//   todayData.features
-//     .filter(item => item.attributes.Province_State === null)
-//     .forEach(item => {
-//       const country = item.attributes.Country_Region;
-//       todayCountries[country] = {
-//         'Confirmed': item.attributes['Confirmed'],
-//         'Deaths': item.attributes['Deaths'],
-//         // 'Recovered': item.attributes['Recovered'],
-//       }
-//     });
-//
-//   todayCountries['United States'] = todayUSA;
-//   // console.log(todayCountries)
-//   // console.log(todayUSARegions)
-// }
 
 const generateMenu = async() => {
   console.log('Generate Menu');
@@ -911,23 +705,18 @@ const generateTimeseriesFile = async() => {
 
 }
 
-
 // start up server
 const express = require('express')
 const app = express();
 const port = 3000;
 
-app.get('/menu', (req, res) => {
-  getMenuOptions()
-    .then((menu) => res.send(menu));
-});
 
-app.get('/report', (req, res) => {
+app.get('/today', (req, res) => {
 
   prepareOptions(req);
 
   getTodayData()
-    .then(() => prepareReportData())
+    .then(prepareTodayReportResponse)
     .then((response) => res.send(response))
 
 });
