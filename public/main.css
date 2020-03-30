@@ -251,6 +251,13 @@ button.selected {
     font-size: 10px;
 }
 
+#snap-to-days-input {
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+    font-size: 15px;
+}
+
 /* mobile devices */
 @media (max-width:992px){
 
@@ -333,7 +340,7 @@ button.selected {
         padding-left: 15px;
     }
     button {
-        font-size: 20px;
+        font-size: 16px;
     }
     .options-container {
         display: flex;
