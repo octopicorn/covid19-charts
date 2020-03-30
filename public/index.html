@@ -452,19 +452,71 @@
       renderMenuCounties();
     }
 
+    function updateDataFromLatestRefresh(todayDataResponse) {
+      // todayData has the same object shape as the historical data
+      /*
+      timeseriesIndexToUpdate: 100,
+      timeseries: {
+        countries: {
+          COUNTRY_NAME: {
+            timeseriesByCategory: {
+              'Confirmed': 0,
+              'Recovered': 0,
+              'Deaths': 0,
+            }
+          },
+          ...
+        },
+        states: {
+          ...
+        }
+      }
+      */
+
+      const {timeseriesIndexToUpdate} = todayDataResponse;
+      const timeseriesToday = todayDataResponse.timeseries;
+
+      if (timeseriesIndexToUpdate === covData.timeseriesDays.length) {
+        covData.timeseriesDays.push('Today');
+      }
+      // loop through and update states
+      Object.keys(timeseriesToday.states).forEach(state => {
+        if (covData.timeseries.states[state] && covData.timeseries.states[state].timeseriesByCategory) {
+          covData.timeseries.states[state].timeseriesByCategory['Confirmed'][timeseriesIndexToUpdate] = timeseriesToday.states[state].timeseriesByCategory['Confirmed'];
+          // covData.timeseries.states[state].timeseriesByCategory['Recovered'][timeseriesIndexToUpdate] = timeseriesToday.states[state].timeseriesByCategory['Recovered'];
+          covData.timeseries.states[state].timeseriesByCategory['Deaths'][timeseriesIndexToUpdate] = timeseriesToday.states[state].timeseriesByCategory['Deaths'];
+        }
+      });
+
+      // loop through and update countries
+      Object.keys(timeseriesToday.countries).forEach(country => {
+        if (covData.timeseries.countries[country] && covData.timeseries.countries[country].timeseriesByCategory) {
+          covData.timeseries.countries[country].timeseriesByCategory['Confirmed'][timeseriesIndexToUpdate] = timeseriesToday.countries[country].timeseriesByCategory['Confirmed'];
+          // covData.timeseries.countries[country].timeseriesByCategory['Recovered'][timeseriesIndexToUpdate] = timeseriesToday.countries[country].timeseriesByCategory['Recovered'];
+          covData.timeseries.countries[country].timeseriesByCategory['Deaths'][timeseriesIndexToUpdate] = timeseriesToday.countries[country].timeseriesByCategory['Deaths'];
+        }
+      })
+
+    }
+
     $(function () {
 
       isMobile = detectMobile.any();
 
       $.when(
 
-        // fetch the data
-
+        // fetch the initial data
         $.ajax('/menu.json'),
-        $.ajax('/timeseries.json')
+        $.ajax('/timeseries.json'),
+
+        // also fetch up to the minute update from today
+        // this feature is commented out below in the updating script
+        // but this data could be used to show a dashboard similar to JH CSSE:
+        // https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html
+        $.ajax('/today')
 
       )
-        .done((menuResponse, timeseriesResponse) => {
+        .done((menuResponse, timeseriesResponse, todayResponse) => {
 
           // data has been loaded
 
@@ -524,6 +576,15 @@
 
           var ctx = $('#chart-placeholder');
           chart = new Chart(ctx, chartConfig);
+
+
+          // capability is there to pull the latest daya from today, but turned off for now because it gives false
+          // impression that curve is getting better when it's actually just that we are only partially through the
+          // given day. true comparative data is only visually valuable when we are comparing similar units of time
+          // uncomment to see this working if you like...
+          //
+          // const [todayData] = todayResponse;
+          // updateDataFromLatestRefresh(todayData);
 
           drawChart();
 
@@ -650,9 +711,7 @@
     </section>
   </nav>
   </main>
-  <footer
-      style="margin: 25px; font-size: 10px;"
-  >Made in the San Francisco Bay Area, California, USA</footer>
+  <footer style="margin: 25px; font-size: 10px; display: none">Made in the San Francisco Bay Area, California, USA</footer>
 </div>
 
 
