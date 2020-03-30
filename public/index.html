@@ -30,6 +30,7 @@
       showConfirmed: true,
       showDeaths: false,
       snapTo100: true,
+      snapTo1: false,
     }
 
     let areasOfInterest = {
@@ -196,6 +197,14 @@
       $('#snapTo100').on('click', function() {
         const isChecked = $(this).is(":checked");
         settings.snapTo100 = isChecked;
+        if (isChecked) { $('#option-container-snapTo1 input').prop("checked", false); settings.snapTo1 = false; }
+        drawChart();
+      });
+
+      $('#snapTo1').on('click', function() {
+        const isChecked = $(this).is(":checked");
+        settings.snapTo1 = isChecked;
+        if (isChecked) { $('#option-container-snapTo100 input').prop("checked", false); settings.snapTo100 = false; }
         drawChart();
       });
 
@@ -228,6 +237,20 @@
 
     }
 
+    function snapDataTo1 (data) {
+
+      let result = []; // in best case scenario, 100 has never been reached, in which case we have default empty dataset
+
+      // if we found a "first 100" day, truncate the data array to start from that day
+      const indexOfFirst1 = data.findIndex(item => item >= 1);
+      if (indexOfFirst1 >= 0){
+        result = data.slice(indexOfFirst1);
+      }
+
+      return result;
+
+    }
+
     function drawChart() {
 
       let datasets = [];
@@ -254,6 +277,10 @@
             data = snapDataTo100(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
+          if (settings.snapTo1){
+            data = snapDataTo1(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
 
           dataset = {
             ...defaultOptions,
@@ -270,6 +297,11 @@
           // if snapTo100 setting is activated, truncate data to start from day of first 100
           if (settings.snapTo100){
             data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo1){
+            data = snapDataTo1(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
 
@@ -293,6 +325,11 @@
             data = snapDataTo100(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
+          // if snapTo100 setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo1){
+            data = snapDataTo1(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
 
           dataset = {
             ...defaultOptions,
@@ -309,6 +346,10 @@
           // if snapTo100 setting is activated, truncate data to start from day of first 100
           if (settings.snapTo100){
             data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+          if (settings.snapTo1){
+            data = snapDataTo1(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
 
@@ -332,6 +373,10 @@
             data = snapDataTo100(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
+          if (settings.snapTo1){
+            data = snapDataTo1(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
 
           dataset = {
             ...defaultOptions,
@@ -347,6 +392,10 @@
           // if snapTo100 setting is activated, truncate data to start from day of first 100
           if (settings.snapTo100){
             data = snapDataTo100(data);
+            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
+          }
+          if (settings.snapTo1){
+            data = snapDataTo1(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
           dataset = {
@@ -387,6 +436,10 @@
 
       // if snap to 100 feature is activated, use a different x-axis with generic day numbers
       if (settings.snapTo100) {
+        const truncatedXAxis = [...Array(66).keys()].map((item) => `Day ${item + 1}`);
+        chartConfig.data.labels = truncatedXAxis;
+      }
+      if (settings.snapTo1) {
         const truncatedXAxis = [...Array(66).keys()].map((item) => `Day ${item + 1}`);
         chartConfig.data.labels = truncatedXAxis;
       }
@@ -432,11 +485,16 @@
         // uncheck and disable the snapTo100 feature if showing both
         $('#option-container-snapTo100').addClass('disabled');
         $('#option-container-snapTo100 input').prop("checked", false).attr('disabled', 'disabled');
+        $('#option-container-snapTo1').addClass('disabled');
+        $('#option-container-snapTo1 input').prop("checked", false).attr('disabled', 'disabled');
       } else {
         // restore the snapTo100 feature if showing just one
         $('#option-container-snapTo100').removeClass('disabled');
         $('#option-container-snapTo100 input').removeAttr('disabled');
+        $('#option-container-snapTo1').removeClass('disabled');
+        $('#option-container-snapTo1 input').removeAttr('disabled');
       }
+
     }
 
     function updateChartPalette(newPalette) {
@@ -572,6 +630,15 @@
             </label>
           </div>
 
+          <div class="option-container" id="option-container-snapTo1">
+            <div class="option-title">
+              Align to Day First One Reached
+            </div>
+            <label class="checkbox">
+              <input type="checkbox" id="snapTo1" />
+              <span class="checkmark"></span>
+            </label>
+          </div>
           <!--
           <div class="option-container">
             <div class="option-title">
