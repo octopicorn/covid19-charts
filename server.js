@@ -47,7 +47,7 @@ const regionsCanada = {
   "NU": "Nunavut",
   "ON": "Ontario",
   "PE": "Prince Edward Island",
-  "QC": "Québec",
+  "QC": "Quebec",
   "SK": "Saskatchewan",
   "YT": "Yukon",
 }
