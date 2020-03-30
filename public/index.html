@@ -29,8 +29,8 @@
     let settings = {
       showConfirmed: true,
       showDeaths: false,
-      snapTo100: true,
-      snapTo1: false,
+      snapTo: true,
+      snapToNumber: 100,
     }
 
     let areasOfInterest = {
@@ -60,9 +60,6 @@
       }
     };
 
-    function catchUpData() {
-
-    }
 
     function renderMenuCountries() {
       if (menuData && menuData.countries) {
@@ -194,19 +191,25 @@
         updateChartPalette(newPalette);
       });
 
-      $('#snapTo100').on('click', function() {
+      $('#snapToToggle').on('click', function() {
         const isChecked = $(this).is(":checked");
-        settings.snapTo100 = isChecked;
-        if (isChecked) { $('#option-container-snapTo1 input').prop("checked", false); settings.snapTo1 = false; }
+        settings.snapTo = isChecked;
+        if (isChecked) {
+          $(this).prop("checked", "checked");
+        } else {
+          $(this).prop("checked", undefined);
+        }
         drawChart();
       });
 
-      $('#snapTo1').on('click', function() {
-        const isChecked = $(this).is(":checked");
-        settings.snapTo1 = isChecked;
-        if (isChecked) { $('#option-container-snapTo100 input').prop("checked", false); settings.snapTo100 = false; }
-        drawChart();
-      });
+      $('#snap-to-days-input').on('input', function(e) {
+        e.preventDefault();
+        const newVal = Number($(this).val());
+        if (newVal !== NaN && newVal > 0) {
+          settings.snapToNumber = newVal;
+          drawChart();
+        }
+      })
 
       $('.clear-data').on('click', function (e) {
         e.preventDefault();
@@ -223,28 +226,17 @@
       });
     }
 
-    function snapDataTo100 (data) {
+    function snapDataToFirstDay (data) {
 
-      let result = []; // in best case scenario, 100 has never been reached, in which case we have default empty dataset
+      let snapToNumber = settings.snapToNumber;
 
-      // if we found a "first 100" day, truncate the data array to start from that day
-      const indexOfFirst100 = data.findIndex(item => item >= 100);
-      if (indexOfFirst100 >= 0){
-        result = data.slice(indexOfFirst100);
-      }
 
-      return result;
+      let result = []; // in best case scenario, number of cases has never been reached, in which case we have default empty dataset
 
-    }
-
-    function snapDataTo1 (data) {
-
-      let result = []; // in best case scenario, 100 has never been reached, in which case we have default empty dataset
-
-      // if we found a "first 100" day, truncate the data array to start from that day
-      const indexOfFirst1 = data.findIndex(item => item >= 1);
-      if (indexOfFirst1 >= 0){
-        result = data.slice(indexOfFirst1);
+      // if we found a "first n" day, truncate the data array to start from that day
+      const indexOfFirstDay = data.findIndex(item => item >= snapToNumber);
+      if (indexOfFirstDay >= 0){
+        result = data.slice(indexOfFirstDay);
       }
 
       return result;
@@ -272,13 +264,9 @@
           let data = covData.timeseries.countries[country].timeseriesByCategory['Confirmed'];
           const label = showCategory ? `${country} Confirmed` : country;
 
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo100){
-            data = snapDataTo100(data);
-            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
-          }
-          if (settings.snapTo1){
-            data = snapDataTo1(data);
+          // if snapTo setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo){
+            data = snapDataToFirstDay(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
 
@@ -294,14 +282,9 @@
           let data = covData.timeseries.countries[country].timeseriesByCategory['Deaths'];
           const label = showCategory ? `${country} Deaths` : country;
 
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo100){
-            data = snapDataTo100(data);
-            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
-          }
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo1){
-            data = snapDataTo1(data);
+          // if snapTo setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo){
+            data = snapDataToFirstDay(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
 
@@ -320,14 +303,9 @@
           let data = covData.timeseries.states[state].timeseriesByCategory['Confirmed'];
           const label = showCategory ? `${state} Confirmed` : state;
 
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo100){
-            data = snapDataTo100(data);
-            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
-          }
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo1){
-            data = snapDataTo1(data);
+          // if snapTo setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo){
+            data = snapDataToFirstDay(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
 
@@ -343,13 +321,9 @@
           let data = covData.timeseries.states[state].timeseriesByCategory['Deaths'];
           const label = showCategory ? `${state} Deaths` : state;
 
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo100){
-            data = snapDataTo100(data);
-            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
-          }
-          if (settings.snapTo1){
-            data = snapDataTo1(data);
+          // if snapTo setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo){
+            data = snapDataToFirstDay(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
 
@@ -368,13 +342,9 @@
           let data = covData.timeseries.counties[county].timeseriesByCategory['Confirmed'];
           const label = showCategory ? `${county} Confirmed` : county;
 
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo100){
-            data = snapDataTo100(data);
-            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
-          }
-          if (settings.snapTo1){
-            data = snapDataTo1(data);
+          // if snapTo setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo){
+            data = snapDataToFirstDay(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
 
@@ -389,15 +359,12 @@
         if (settings.showDeaths) {
           let data = covData.timeseries.counties[county].timeseriesByCategory['Deaths'];
           const label = showCategory ? `${county} Deaths` : county;
-          // if snapTo100 setting is activated, truncate data to start from day of first 100
-          if (settings.snapTo100){
-            data = snapDataTo100(data);
+          // if snapTo setting is activated, truncate data to start from day of first 100
+          if (settings.snapTo){
+            data = snapDataToFirstDay(data);
             timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
           }
-          if (settings.snapTo1){
-            data = snapDataTo1(data);
-            timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
-          }
+
           dataset = {
             label,
             data,
@@ -415,16 +382,6 @@
         title = 'Deaths';
       }
 
-
-      // var max = -Infinity;
-      // var index = -1;
-      // masterArray.forEach(function(a, i){
-      //   if (a.length>max) {
-      //     max = a.length;
-      //     index = i;
-      //   }
-      // });
-
       chartConfig.options.title = {
         display: true,
         text: title,
@@ -435,12 +392,12 @@
       chartConfig.data.labels = covData.timeseriesDays;
 
       // if snap to 100 feature is activated, use a different x-axis with generic day numbers
-      if (settings.snapTo100) {
-        const truncatedXAxis = [...Array(66).keys()].map((item) => `Day ${item + 1}`);
+      if (settings.snapTo) {
+        const truncatedXAxis = [...Array(timeSeriesMaxLength).keys()].map((item) => `Day ${item + 1}`);
         chartConfig.data.labels = truncatedXAxis;
       }
       if (settings.snapTo1) {
-        const truncatedXAxis = [...Array(66).keys()].map((item) => `Day ${item + 1}`);
+        const truncatedXAxis = [...Array(timeSeriesMaxLength).keys()].map((item) => `Day ${item + 1}`);
         chartConfig.data.labels = truncatedXAxis;
       }
 
@@ -480,15 +437,15 @@
         settings.showDeaths = true;
       }
 
-      // side effects on snapTo100 feature
+      // side effects on snapTo feature
       if (settings.showConfirmed && settings.showDeaths) {
-        // uncheck and disable the snapTo100 feature if showing both
+        // uncheck and disable the snapTo feature if showing both
         $('#option-container-snapTo100').addClass('disabled');
         $('#option-container-snapTo100 input').prop("checked", false).attr('disabled', 'disabled');
         $('#option-container-snapTo1').addClass('disabled');
         $('#option-container-snapTo1 input').prop("checked", false).attr('disabled', 'disabled');
       } else {
-        // restore the snapTo100 feature if showing just one
+        // restore the snapTo feature if showing just one
         $('#option-container-snapTo100').removeClass('disabled');
         $('#option-container-snapTo100 input').removeAttr('disabled');
         $('#option-container-snapTo1').removeClass('disabled');
@@ -681,22 +638,12 @@
       <section>
         <div class="options-container">
 
-          <div class="option-container" id="option-container-snapTo100">
+          <div class="option-container" id="option-container-snapTo">
             <div class="option-title">
-              Align to Day First 100 Reached
+              Align to First <input type="text" value="100" id="snap-to-days-input" />
             </div>
             <label class="checkbox">
-              <input type="checkbox" id="snapTo100" checked="checked" />
-              <span class="checkmark"></span>
-            </label>
-          </div>
-
-          <div class="option-container" id="option-container-snapTo1">
-            <div class="option-title">
-              Align to Day First One Reached
-            </div>
-            <label class="checkbox">
-              <input type="checkbox" id="snapTo1" />
+              <input type="checkbox" id="snapToToggle" checked="checked" />
               <span class="checkmark"></span>
             </label>
           </div>
