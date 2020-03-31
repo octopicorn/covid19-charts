@@ -31,6 +31,11 @@ main {
 
 }
 
+#left-pane  {
+    width: 65%;
+    background-color: #EEE;
+}
+
 nav {
     display: flex;
     max-width: 100%;
@@ -78,7 +83,7 @@ button {
     border: solid 1px gray;
     color: gray;
     font-weight: bold;
-    padding: 10px;
+    padding: 4px;
     cursor: pointer;
     background-color: #EFEFEF;
 }
@@ -87,7 +92,6 @@ button.selected {
     background-color: gray;
 }
 .options-container {
-    margin-top: 20px;
 }
 
 .option-container {
@@ -101,7 +105,7 @@ button.selected {
 
 .option-title {
     font-weight: bold;
-    font-size: 20px;
+    font-size: 14px;
     padding: 10px;
 }
 
@@ -117,6 +121,7 @@ button.selected {
 }
 .github-link a {
     color: cornflowerblue;
+    font-size: 12px;
 }
 
 .select {
@@ -179,7 +184,7 @@ button.selected {
     display: block;
     position: relative;
     padding-left: 35px;
-    margin-bottom: 24px;
+    height: 25px;
     cursor: pointer;
     font-size: 22px;
     -webkit-user-select: none;
@@ -254,8 +259,24 @@ button.selected {
 #snap-to-days-input {
     display: inline-block;
     width: 60px;
-    height: 30px;
-    font-size: 15px;
+    height: 20px;
+    font-size: 13px;
+    border-width: 1px;
+    padding: 5px;
+}
+
+.search-locations-container {
+    display:flex;
+    width: 100%;
+    margin-top: 20px;
+}
+.search-menu-list-input {
+    width: 120px;
+    display: block;
+    border-width: 1px;
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 5px;
 }
 
 /* mobile devices */
@@ -282,7 +303,7 @@ button.selected {
     }
     nav section {
         padding: 0 5px;
-
+        width: 100%;
     }
     canvas {
         width: 100%;
@@ -304,12 +325,20 @@ button.selected {
         display: block;
     }
 
+    .option-container {
+        padding: 5px;
+    }
+
     .select .arr {
 
     }
 
     .github-link {
         font-size: 12px;
+    }
+
+    .search-menu-list-input {
+        width: 70px;
     }
 }
 
@@ -323,20 +352,20 @@ button.selected {
         padding: 10px 0px 10px 10px;
     }
     header img {
-        width: 30px;
-        height: 30px;
-        padding-right: 10px;
+        width: 20px;
+        height: 20px;
+        padding-right: 5px;
     }
     main {
         display: flex;
-        justify-content: space-between;
+        /*justify-content: space-between;*/
     }
     nav {
-        width: 500px;
+        /*width: 500px;*/
         padding-right: 15px;
     }
     nav section {
-
+        width: 100%;
         padding-left: 15px;
     }
     button {
