@@ -391,7 +391,7 @@
 
       if (populationData) {
         result = data.map(item => {
-          return item / populationData;
+          return item / (populationData / 100000);
         });
       }
 
