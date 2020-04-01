@@ -32,7 +32,7 @@ main {
 }
 
 #left-pane  {
-    width: 65%;
+    width: 100%;
     background-color: #EEE;
 }
 
@@ -52,7 +52,6 @@ nav {
 #chart-content {
     display: block;
     width: 100%;
-
     background-color: #FFF;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
@@ -279,8 +278,14 @@ button.selected {
     margin-bottom: 5px;
 }
 
+#clear-all-chart-data {
+    text-align: right;
+    font-size: 12px;
+    padding: 5px 10px;
+}
+
 /* mobile devices */
-@media (max-width:992px){
+@media (max-width:992px) {
 
     header {
         padding: 10px 10px 10px 10px;
@@ -316,7 +321,8 @@ button.selected {
     }
 
     #chart-content {
-        height: 300px;
+        /*height: 300px;*/
+        height: 50vh;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
     }
@@ -337,8 +343,17 @@ button.selected {
         font-size: 12px;
     }
 
+    .search-locations-container {
+        margin-top: 0;
+    }
     .search-menu-list-input {
         width: 70px;
+    }
+}
+
+@media (max-width:992px) and (orientation: landscape) {
+    #chart-content {
+        height: 100vh;
     }
 }
 
@@ -371,6 +386,12 @@ button.selected {
     button {
         font-size: 16px;
     }
+    #chart-content {
+        /*height: 300px;*/
+        height: 65vh;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
     .options-container {
         display: flex;
     }
@@ -379,12 +400,13 @@ button.selected {
         width: 50px;
     }
 
+
 }
 
 /* tablet */
 @media (min-width:993px) and (max-width:1024px){
     #chart-content {
-        height: auto;
+        height: 50vh;
     }
     .options-container {
         display: block;

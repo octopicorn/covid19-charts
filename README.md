@@ -31,8 +31,7 @@ Some clickable buttons appear below the chart:
 - toggle between confirmed vs deaths timeseries data
 
 ## To Do
-- allow option to line up all visible timeseries to common starting day of first 100 cases. This is useful for inspecting differences in growth rate.
-- add better documentation explaining how the data is collected, and where it comes from
+See "Issues" tab above.
 
 ## Data sets
 Country and State data is from the public repo made available by Johns Hopkins CSSE.
@@ -50,7 +49,17 @@ From their website:
 
 Link: https://usafacts.org/visualizations/coronavirus-covid-19-spread-map/
  
- 
+Some corrections have been applied to historical data by cross-referencing numbers form the New York Times dataset. 
+(Example: Ney York state numbers from 3/1 - 3/10)
+Link: https://github.com/nytimes/covid-19-data
+
+Population data for US states and counties:
+https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/totals/
+
+Population for world countries from:
+https://github.com/samayo/country-json
+(Some population numbers were fixed by searching google.)
+
 ## Contact Us
  
 Create an issue or a pull request to get in touch (see tabs above).
