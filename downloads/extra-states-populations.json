@@ -1,0 +1,124 @@
+[
+  {
+    "name": "Puerto Rico",
+    "country": "US",
+    "population": "11773"
+  },
+  {
+    "name": "Guam",
+    "country": "US",
+    "population": "167722"
+  },
+  {
+    "name": "Virgin Islands",
+    "country": "US",
+    "population": "104578"
+  },
+
+  {
+    "name": "Alberta",
+    "country": "Canada",
+    "population": "4345737"
+  },
+  {
+    "name": "British Columbia",
+    "country": "Canada",
+    "population": "5020302"
+  },
+  {
+    "name": "Manitoba",
+    "country": "Canada",
+    "population": "1360396"
+  },
+  {
+    "name": "New Brunswick",
+    "country": "Canada",
+    "population": "772094"
+  },
+  {
+    "name": "Newfoundland and Labrador",
+    "country": "Canada",
+    "population": "523790"
+  },
+  {
+    "name": "Nova Scotia",
+    "country": "Canada",
+    "population": "965382"
+  },
+  {
+    "name": "Northwest Territories",
+    "country": "Canada",
+    "population": "4598"
+  },
+  {
+    "name": "Nunavut",
+    "country": "Canada",
+    "population": "38787"
+  },
+  {
+    "name": "Ontario",
+    "country": "Canada",
+    "population": "14446515"
+  },
+  {
+    "name": "Prince Edward Island",
+    "country": "Canada",
+    "population": "154748"
+  },
+  {
+    "name": "Quebec",
+    "country": "Canada",
+    "population": "8443301"
+  },
+  {
+    "name": "Saskatchewan",
+    "country": "Canada",
+    "population": "1168423"
+  },
+  {
+    "name": "Yukon",
+    "country": "Canada",
+    "population": "40369"
+  },
+
+  {
+    "name": "Australian Capital Territory",
+    "country": "Australia",
+    "population": "426709"
+  },
+  {
+    "name": "New South Wales",
+    "country": "Australia",
+    "population": "8089526"
+  },
+  {
+    "name": "Northern Territory",
+    "country": "Australia",
+    "population": "245869"
+  },
+  {
+    "name": "Queensland",
+    "country": "Australia",
+    "population": "5095100"
+  },
+  {
+    "name": "South Australia",
+    "country": "Australia",
+    "population": "1751693"
+  },
+  {
+    "name": "Tasmania",
+    "country": "Australia",
+    "population": "534281"
+  },
+  {
+    "name": "Victoria",
+    "country": "Australia",
+    "population": "6594804"
+  },
+  {
+    "name": "Western Australia",
+    "country": "Australia",
+    "population": "2621680"
+  }
+]
