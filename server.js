@@ -24,7 +24,7 @@ const dateToday = moment.utc()
   .snapToDayStart();
 console.log('date today UTC is ', dateToday.format('YYYY-MM-DD'), '\n')
 
-const categories = ['Confirmed', 'Deaths'];
+const categories = ['Confirmed', 'Deaths', 'Recovered'];
 
 let todayData = [];
 
@@ -337,7 +337,7 @@ const generateTimeseriesFile = async() => {
     }
   };
 
-  const categories = ['Confirmed', 'Deaths'];
+  const categories = ['Confirmed', 'Deaths', 'Recovered'];
   let timeseriesDays = [];
 
   // populate data for countries - read from V2 file
@@ -349,6 +349,15 @@ const generateTimeseriesFile = async() => {
     response.timeseries.countries[country] = {
       name: country,
       timeseriesByCategory: {},
+    }
+  }
+  // create stub record for each state
+  for (state of states){
+    response.timeseries.states[state] = {
+      name: state,
+      timeseriesByCategory: {
+        'Recovered': [...Array(timeseriesDays.length).keys()].map((item) => 0),
+      },
     }
   }
 
@@ -381,6 +390,13 @@ const generateTimeseriesFile = async() => {
         // every subsequent row, just add to to the baseline row
         timeseriesNumeric.forEach((item, index) => australiaTimeseries[index] += item);
       }
+
+      if (category === 'Recovered') {
+        if (response.timeseries.states[region]) {
+          response.timeseries.states[region].timeseriesByCategory[category] = timeseriesNumeric;
+        }
+      }
+
     }
     if (response.timeseries.countries['Australia']){
       response.timeseries.countries['Australia'].timeseriesByCategory[category] = australiaTimeseries;
@@ -392,6 +408,7 @@ const generateTimeseriesFile = async() => {
     const canadaProvinceRows = allRows.filter(item => item[0] !== '' && item[1] === 'Canada');
     let canadaTimeseries; // start undefined
     for(const canadaProvinceRow of canadaProvinceRows) {
+
       const [region, countryCode, lat, long, ...timeseries] = canadaProvinceRow;
       const timeseriesNumeric = timeseries.map(item => Number(item));
 
@@ -402,9 +419,20 @@ const generateTimeseriesFile = async() => {
         // every subsequent row, just add to to the baseline row
         timeseriesNumeric.forEach((item, index) => canadaTimeseries[index] += item);
       }
+
+
     }
     if (response.timeseries.countries['Canada']){
       response.timeseries.countries['Canada'].timeseriesByCategory[category] = canadaTimeseries;
+    }
+
+    if (category === 'Recovered') {
+      const canadaCountryRow = allRows.find(item => item[1] === 'Canada');
+      const [region, countryCode, lat, long, ...timeseries] = canadaCountryRow;
+      const timeseriesNumeric = timeseries.map(item => Number(item));
+      if (response.timeseries.countries['Canada']) {
+        response.timeseries.countries['Canada'].timeseriesByCategory[category] = timeseriesNumeric;
+      }
     }
 
     // China is a special case
@@ -422,6 +450,12 @@ const generateTimeseriesFile = async() => {
       } else {
         // every subsequent row, just add to to the baseline row
         timeseriesNumeric.forEach((item, index) => chinaTimeseries[index] += item);
+      }
+
+      if (category === 'Recovered') {
+        if (response.timeseries.states[region]) {
+          response.timeseries.states[region].timeseriesByCategory[category] = timeseriesNumeric;
+        }
       }
     }
 
@@ -447,17 +481,14 @@ const generateTimeseriesFile = async() => {
   console.log()
   console.log('preparing timeseries data for', states.length, 'known states')
 
-  // create stub record for each state
-  for (state of states){
-    response.timeseries.states[state] = {
-      name: state,
-      timeseriesByCategory: {},
-    }
-  }
-
 
   // populate states timeseries from each global category (V1) file
   for (category of categories) {
+
+    if (category === 'Recovered') {
+      // there is no V1 file for recovered
+      break;
+    }
 
     // read rows from V2 file
     const {rows: v1Rows, columns: allColumns} = await csvParser.readGlobalCategoryDatafile(null, category, 'v1');
@@ -507,12 +538,20 @@ const generateTimeseriesFile = async() => {
       timeseriesByCategory: {
         'Confirmed': [],
         'Deaths': [],
+        'Recovered': [...Array(timeseriesDays.length).keys()].map((item) => 0),
+        'Active': [...Array(timeseriesDays.length).keys()].map((item) => 0),
       },
     }
   }
 
   // populate counties timeseries from each global category (usafacts) file
   for (category of categories) {
+
+
+    if (category === 'Recovered') {
+      // there is no usafacts file for county recovered
+      break;
+    }
 
     // read rows from V2 file
     const {rows: usafactsRows, columns: allColumns} = await csvParser.readGlobalCategoryDatafile(null, category, 'usafacts');
@@ -606,17 +645,20 @@ const generateTimeseriesFile = async() => {
 
         const countyConfirmedCount = Number(Confirmed);
         const countyDeathsCount = Number(Deaths);
+        const countyRecoveredCount = Number(Recovered);
 
         // for US counties, keep a state tally
         if (Country_Region === 'US') {
 
           if (typeof stateTallies[Province_State] === 'undefined') {
-            stateTallies[Province_State] = {'Confirmed': 0, 'Deaths': 0};
+            stateTallies[Province_State] = {'Confirmed': 0, 'Deaths': 0, 'Recovered': 0};
           }
 
           // keep up state tally for later
           stateTallies[Province_State]['Confirmed'] += countyConfirmedCount;
           stateTallies[Province_State]['Deaths'] += countyDeathsCount;
+          // daily reports do not currently update recovered
+          // stateTallies[Province_State]['Recovered'] += countyRecoveredCount;
 
           const countyName = `${Admin2}, ${Province_State}`;
 

@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta property="og:image" content="https://valis.pub/fb-thumb.png" />
+  <meta property="og:image" content="https://valis.pub/fb-thumb2.png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://valis.pub" />
   <meta property="og:title" content="covid-19 charts" />
@@ -30,6 +30,7 @@
     let settings = {
       showConfirmed: true,
       showDeaths: false,
+      showRecovered: false,
       snapTo: true,
       snapToNumber: 100,
       normalizePopulation: false,
@@ -440,6 +441,8 @@
       let dataCategory = 'Confirmed';
       if (settings.showDeaths) {
         dataCategory = 'Deaths';
+      } else if (settings.showRecovered) {
+        dataCategory = 'Recovered';
       }
 
       let timeSeriesMaxLength = 0;
@@ -447,7 +450,8 @@
       // plot countries
       for (country of areasOfInterest.countries) {
 
-          let data = covData.timeseries.countries[country].timeseriesByCategory[dataCategory];
+          let data = covData.timeseries.countries[country].timeseriesByCategory[dataCategory] || [];
+
           const label = country;
           // if snapTo setting is activated, truncate data to start from day of first 100
           if (settings.snapTo){
@@ -472,7 +476,7 @@
       // plot states
       for (state of areasOfInterest.states) {
 
-        let data = covData.timeseries.states[state].timeseriesByCategory[dataCategory];
+        let data = covData.timeseries.states[state].timeseriesByCategory[dataCategory] || [];
         const label = state;
 
         // if snapTo setting is activated, truncate data to start from day of first 100
@@ -497,7 +501,7 @@
 
       // plot counties
       for (county of areasOfInterest.counties) {
-        let data = covData.timeseries.counties[county].timeseriesByCategory[dataCategory];
+        let data = covData.timeseries.counties[county].timeseriesByCategory[dataCategory] || [];
         const label = county;
 
         // if snapTo setting is activated, truncate data to start from day of first 100
@@ -524,7 +528,7 @@
       if (settings.showConfirmed) {
         title = 'Confirmed Cases';
       } else {
-        title = 'Deaths';
+        title = dataCategory;
       }
 
       chartConfig.options.title = {
@@ -629,12 +633,19 @@
       if (confirmedOrDeaths === 'confirmed') {
         settings.showConfirmed = true;
         settings.showDeaths = false;
+        settings.showRecovered = false;
       } else if (confirmedOrDeaths === 'deaths') {
         settings.showConfirmed = false;
         settings.showDeaths = true;
+        settings.showRecovered = false;
+      } else if (confirmedOrDeaths === 'recovered') {
+        settings.showConfirmed = false;
+        settings.showDeaths = false;
+        settings.showRecovered = true;
       } else if (confirmedOrDeaths === 'both') {
         settings.showConfirmed = true;
         settings.showDeaths = true;
+        settings.showRecovered = false;
       }
 
       // side effects on snapTo feature
@@ -889,13 +900,17 @@
             <div class="buttons-container">
               <button class="button-change-timeseries-data-type selected" data-type="confirmed">confirmed</button>
               <button class="button-change-timeseries-data-type" data-type="deaths">deaths</button>
+              <button class="button-change-timeseries-data-type" data-type="recovered">recovered</button>
               <!-- <button class="button-change-timeseries-data-type" data-type="both">both</button>-->
             </div>
+
           </div>
 
 
 
+
         </div>
+        <div style="font-size: 10px; padding-left: 70px; padding-bottom: 20px">* recovered data only available in countries</div>
 
         <div class="options-container">
           <div class="option-container">
@@ -977,6 +992,7 @@
               <button class="button-change-line-width" data-value="3">&nbsp;3&nbsp;</button>
             </div>
           </div>
+        </div>
 
       </section>
     </div>
