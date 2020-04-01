@@ -245,6 +245,14 @@
         updateChartScale(newScaleType);
       });
 
+      $('.button-change-chart-transform').on('click', function() {
+        $('.button-change-chart-transform').removeClass('selected');
+        $(this).addClass('selected');
+
+        const newType = $(this).data('type');
+        updateChartDataTransform(newType);
+      });
+
       $('.button-change-timeseries-data-type').on('click', function() {
         $('.button-change-timeseries-data-type').removeClass('selected');
         $(this).addClass('selected');
@@ -591,37 +599,41 @@
     function updateChartScale(newType) {
       settings.plotType = newType;
 
+      chart.options.scales.yAxes[0] = {
+        type: newType,
+        ticks: {
+          callback: function (value, index, values) {
+
+            if (settings.plotType === 'logarithmic') {
+              return fnum(value);
+            }
+            return Number(value.toString()); // pass tick values as a string into Number function
+          }
+        },
+      };
+      chart.update();
+
+      drawChart();
+
+
+    }
+
+    function updateChartDataTransform(newType) {
+
       if (newType === 'population') {
         settings.normalizePopulation = true;
         settings.normalizeDelta = false;
-
-        chart.options.scales.yAxes[0] = {
-          type: 'linear',
-        };
 
         chart.update();
       } else if (newType === 'delta') {
         settings.normalizePopulation = false;
         settings.normalizeDelta = true;
-        chart.options.scales.yAxes[0] = {
-          type: 'linear',
-        };
+
         chart.update();
       } else {
         settings.normalizePopulation = false;
         settings.normalizeDelta = false;
-        chart.options.scales.yAxes[0] = {
-          type: newType,
-          ticks: {
-            callback: function (value, index, values) {
 
-              if (settings.plotType === 'logarithmic') {
-                return fnum(value);
-              }
-              return Number(value.toString()); // pass tick values as a string into Number function
-            }
-          },
-        };
         chart.update();
       }
       drawChart();
@@ -884,8 +896,17 @@
             <div class="buttons-container">
               <button class="button-change-chart-scale selected" data-type="linear">linear</button>
               <button class="button-change-chart-scale" data-type="logarithmic">log</button>
-              <button class="button-change-chart-scale" data-type="population">% of population</button>
-              <button class="button-change-chart-scale" data-type="delta">daily increase</button>
+            </div>
+          </div>
+
+          <div class="option-container">
+            <div class="option-title">
+              Transform
+            </div>
+            <div class="buttons-container">
+              <button class="button-change-chart-transform selected" data-type="raw">raw</button>
+              <button class="button-change-chart-transform" data-type="population">% of population</button>
+              <button class="button-change-chart-transform" data-type="delta">daily increase</button>
             </div>
           </div>
 
