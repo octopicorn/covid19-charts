@@ -4,6 +4,7 @@ const path = require('path');
 const moment = require('moment');
 const csvParser = require('./csvParser');
 const countryPopulations = require('./downloads/country-populations.json');
+const extraPopulations = require('./downloads/extra-states-populations');
 
 const {
   regionsAustralia,
@@ -35,13 +36,6 @@ const generate = async() => {
   const {countries, states, counties} = menu;
 
   const knownCountries = countries;
-  const knownCountriesAliases = {
-    "Fiji Islands": "Fiji",
-    "Cape Verde": "Cabo Verde",
-    "England": "United Kingdom",
-
-  }
-
   const knownCountyNames = counties.map(item => `${item[0]}, ${item[1]}`);
 
   const knownUSStates = Object.values(regionsUSA);
@@ -117,6 +111,12 @@ const generate = async() => {
     }
 
   }
+
+  // fix the remaining states
+  for (extraState of extraPopulations) {
+    response.states[extraState.name] = Number(extraState.population)
+  }
+
 
   for (country of knownCountries){
 
