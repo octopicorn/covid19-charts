@@ -384,7 +384,8 @@ button.selected {
         padding-left: 15px;
     }
     button {
-        font-size: 16px;
+        font-size: 14px;
+        background-color: #FFF;
     }
     #chart-content {
         /*height: 300px;*/
