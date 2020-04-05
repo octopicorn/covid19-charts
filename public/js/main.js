@@ -13,6 +13,7 @@ let settings = {
   snapToNumber: 100,
   normalizePopulation: false,
   normalizeDelta: false,
+  normalizeDoubling: false,
   plotType: 'linear',
 }
 
@@ -392,6 +393,43 @@ function normalizeDataByDelta (data) {
 
 }
 
+function normalizeDataByDoubling (data) {
+  let daysToDouble = 6; // start with a sensible default
+  result = data.map((item, index) => {
+    let prevItem;
+    if (index === 0) {
+      // first data point, delta is just the number - 0
+      prevItem = 0;
+    } else {
+      prevItem = data[index - 1];
+    }
+
+    // by what percent is today greater than yesterday?
+    const rate = (item/prevItem) - 1;
+
+    if (rate === 0) {
+      // instead of showing Infinity on the chart, just show value as not having changed
+      newDaysToDouble = daysToDouble;
+    } else {
+      // use the law of 72 to estimate days to double
+      newDaysToDouble = 72 / (rate* 100);
+
+      // this is a smoothing correction
+      // some days due to bad reporting, the number does not change
+      // this throws off the chart by plotting outlier points way off
+      // which throws off the scale and makes it hard to read
+      if ((newDaysToDouble - daysToDouble) > 5) {
+        newDaysToDouble = daysToDouble;
+      }
+      daysToDouble = newDaysToDouble;
+    }
+
+    return newDaysToDouble;
+  });
+
+  return result;
+}
+
 function drawChart() {
 
   let datasets = [];
@@ -446,6 +484,8 @@ function drawChart() {
       data = normalizeDataByPopulation(data, 'countries', country);
     } else if (settings.normalizeDelta) {
       data = normalizeDataByDelta(data);
+    } else if (settings.normalizeDoubling) {
+      data = normalizeDataByDoubling(data);
     }
 
     dataset = {
@@ -471,6 +511,8 @@ function drawChart() {
       data = normalizeDataByPopulation(data, 'states', state);
     } else if (settings.normalizeDelta) {
       data = normalizeDataByDelta(data);
+    } else if (settings.normalizeDoubling) {
+      data = normalizeDataByDoubling(data);
     }
 
     dataset = {
@@ -497,6 +539,8 @@ function drawChart() {
       data = normalizeDataByPopulation(data, 'counties', county)
     } else if (settings.normalizeDelta) {
       data = normalizeDataByDelta(data);
+    } else if (settings.normalizeDoubling) {
+      data = normalizeDataByDoubling(data);
     }
 
     dataset = {
@@ -532,6 +576,8 @@ function drawChart() {
     yAxisLabel = `${yAxisLabel} per 100k people`;
   } else if (settings.normalizeDelta) {
     yAxisLabel = `${yAxisLabel} daily change`;
+  } else if (settings.normalizeDoubling) {
+    yAxisLabel = `${yAxisLabel} - Days to double`;
   }
 
   if (settings.plotType === 'logarithmic') {
@@ -623,21 +669,30 @@ function updateChartDataTransform(newType) {
   if (newType === 'population') {
     settings.normalizePopulation = true;
     settings.normalizeDelta = false;
+    settings.normalizeDoubling = false;
 
     chart.update();
   } else if (newType === 'delta') {
     settings.normalizePopulation = false;
     settings.normalizeDelta = true;
+    settings.normalizeDoubling = false;
+
+    chart.update();
+  } else if (newType === 'doubling') {
+    settings.normalizePopulation = false;
+    settings.normalizeDelta = false;
+    settings.normalizeDoubling = true;
 
     chart.update();
   } else {
     settings.normalizePopulation = false;
     settings.normalizeDelta = false;
+    settings.normalizeDoubling = false;
 
     chart.update();
   }
-  drawChart();
 
+  drawChart();
 
 }
 

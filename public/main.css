@@ -315,6 +315,7 @@ button.selected {
     }
     button {
         font-size: 12px;
+        margin-bottom: 5px;
     }
     select {
         max-width: 200px;
@@ -405,7 +406,8 @@ button.selected {
 }
 
 /* tablet */
-@media (min-width:993px) and (max-width:1024px){
+@media (min-width:760px) and (max-width:1024px){
+
     #chart-content {
         height: 50vh;
     }
