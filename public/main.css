@@ -85,10 +85,15 @@ button {
     padding: 4px;
     cursor: pointer;
     background-color: #EFEFEF;
+    margin-bottom: 5px;
 }
 button.selected {
     color: #FFF;
     background-color: gray;
+}
+button:disabled {
+    background: #dddddd;
+    color: #666;
 }
 .options-container {
 }
@@ -315,7 +320,6 @@ button.selected {
     }
     button {
         font-size: 12px;
-        margin-bottom: 5px;
     }
     select {
         max-width: 200px;
@@ -390,12 +394,15 @@ button.selected {
     }
     #chart-content {
         /*height: 300px;*/
-        height: 65vh;
+        height: 75vh;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
     }
     .options-container {
         display: flex;
+    }
+    .option-container {
+        min-width: 25%;
     }
     .select .arr {
         right: 5px;
@@ -409,7 +416,7 @@ button.selected {
 @media (min-width:760px) and (max-width:1024px){
 
     #chart-content {
-        height: 50vh;
+        height: 75vh;
     }
     .options-container {
         display: block;
