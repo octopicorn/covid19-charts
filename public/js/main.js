@@ -186,23 +186,6 @@ function bindMenus() {
 
     drawChart();
 
-    // if any button clicked, clear out its input
-    // clearSearchListInput(group);
-
-    // additionally, re-render all the buttons!
-    // switch (group) {
-    //   case 'countries':
-    //     renderMenuCountries();
-    //     break;
-    //   case 'states':
-    //     renderMenuStates();
-    //     break;
-    //   case 'counties':
-    //     renderMenuCounties();
-    //     break;
-    // }
-    // bindMenus()
-
   });
 }
 
@@ -792,6 +775,35 @@ function updateDataFromLatestRefresh(todayDataResponse) {
 
 }
 
+function getUrlQueryAsObject() {
+  let result = {};
+  // get URL query string
+  let params = window.location.search;
+  // remove the '?' character
+  params = params.substr(1);
+  // split the query parameters
+  let queryParamArray = params.split('&');
+  // iterate over parameter array
+  queryParamArray.forEach(function(queryParam) {
+    // split the query parameter over '='
+    let item = queryParam.split('=');
+
+    // save each as single value or expand into array when duplicates found
+    if (typeof result[item[0]] !== 'undefined') {
+      if (!Array.isArray(result[item[0]])) {
+        result[item[0]] = [result[item[0]]];
+      }
+      result[item[0]].push(decodeURIComponent(item[1]));
+    } else {
+      result[item[0]] = decodeURIComponent(item[1]);
+    }
+
+  });
+
+
+  return result;
+}
+
 $(function () {
 
   isMobile = detectMobile.any();
@@ -805,6 +817,28 @@ $(function () {
   const dayToday = dateToday.getUTCDate();
 
   const cachebuster =`${yearToday}-${monthToday}-${dayToday}`;
+
+
+
+  let viewState;
+
+  const defaultQueryParams = {
+
+  }
+  let queryObject = getUrlQueryAsObject();
+
+  let defaultSettings = {
+    metric: 'confirmed', // confirmed | deaths | resolved
+    snapTo: true,
+    snapToNumber: 100,
+    normalizePopulation: false,
+    normalizeDelta: false,
+    normalizeDoubling: false,
+    plotType: 'linear',
+  }
+
+  console.log(queryObject)
+
 
   $.when(
 
