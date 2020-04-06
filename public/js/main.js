@@ -11,9 +11,11 @@ let settings = {
   showRecovered: false,
   snapTo: true,
   snapToNumber: 100,
+  transformMode: null,
   normalizePopulation: false,
   normalizeDelta: false,
   normalizeDoubling: false,
+  normalizeNewVsExisting: false,
   plotType: 'linear',
 }
 
@@ -279,6 +281,7 @@ function bindButtons(){
     areasOfInterest[group] = [];
     drawChart();
   });
+
   $('#clear-all-chart-data').on('click', function(e) {
 
     e.preventDefault();
@@ -351,7 +354,7 @@ function snapDataToFirstDay (data) {
 
 }
 
-function normalizeDataByPopulation (data, group, name) {
+function transformDataByPopulation (data, group, name) {
 
   let populationData;
   switch (group) {
@@ -378,7 +381,7 @@ function normalizeDataByPopulation (data, group, name) {
 
 }
 
-function normalizeDataByDelta (data) {
+function transformDataByDelta (data) {
 
   result = data.map((item, index) => {
     if (index === 0) {
@@ -393,7 +396,7 @@ function normalizeDataByDelta (data) {
 
 }
 
-function normalizeDataByDoubling (data) {
+function transformDataByDoubling (data) {
   let daysToDouble = 6; // start with a sensible default
   result = data.map((item, index) => {
     let prevItem;
@@ -425,6 +428,42 @@ function normalizeDataByDoubling (data) {
     }
 
     return newDaysToDouble;
+  });
+
+  return result;
+}
+
+function transformNewVsExisting(data) {
+  const slidingWindowSize = 7;
+
+  // this will hold the last n numbers used to gather a new cases number
+  const slidingWindow = [];
+
+  const result = [];
+  data.forEach((item, index) => {
+
+    if (slidingWindow.length < slidingWindowSize -1) {
+      // first, just skip the first n-1 records to gather the first sliding window
+      slidingWindow.push(item);
+
+    } else {
+
+      // add newest item to sliding window
+      slidingWindow.push(item);
+
+      // add up the numbers of new cases in the sliding window
+      const earliestItem = slidingWindow[0];
+      const latestItem = slidingWindow[slidingWindow.length - 1];
+
+      const newCases = latestItem - earliestItem; // new cases = current tally minus last week's tally
+      const existingCases = latestItem; // existing cases is just latest data point
+
+      result.push({x: existingCases, y: newCases});
+
+      // remove oldest element from sliding window
+      slidingWindow.shift();
+
+    }
   });
 
   return result;
@@ -468,6 +507,14 @@ function drawChart() {
 
   let timeSeriesMaxLength = 0;
 
+  let xAxes = [];
+
+  if (settings.transformMode === 'newVsExisting') {
+    disableChartScaleButtons();
+  } else {
+    enableChartScaleButtons();
+  }
+
   // plot countries
   for (country of areasOfInterest.countries) {
 
@@ -480,12 +527,14 @@ function drawChart() {
       timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
     }
 
-    if (settings.normalizePopulation) {
-      data = normalizeDataByPopulation(data, 'countries', country);
-    } else if (settings.normalizeDelta) {
-      data = normalizeDataByDelta(data);
-    } else if (settings.normalizeDoubling) {
-      data = normalizeDataByDoubling(data);
+    if (settings.transformMode === 'population') {
+      data = transformDataByPopulation(data, 'countries', country);
+    } else if (settings.transformMode === 'delta') {
+      data = transformDataByDelta(data);
+    } else if (settings.transformMode === 'doubling') {
+      data = transformDataByDoubling(data);
+    } else if (settings.transformMode === 'newVsExisting') {
+      data = transformNewVsExisting(data);
     }
 
     dataset = {
@@ -507,12 +556,14 @@ function drawChart() {
       data = snapDataToFirstDay(data);
       timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
     }
-    if (settings.normalizePopulation) {
-      data = normalizeDataByPopulation(data, 'states', state);
-    } else if (settings.normalizeDelta) {
-      data = normalizeDataByDelta(data);
-    } else if (settings.normalizeDoubling) {
-      data = normalizeDataByDoubling(data);
+    if (settings.transformMode === 'population') {
+      data = transformDataByPopulation(data, 'states', state);
+    } else if (settings.transformMode === 'delta') {
+      data = transformDataByDelta(data);
+    } else if (settings.transformMode === 'doubling') {
+      data = transformDataByDoubling(data);
+    } else if (settings.transformMode === 'newVsExisting') {
+      data = transformNewVsExisting(data);
     }
 
     dataset = {
@@ -535,12 +586,14 @@ function drawChart() {
       timeSeriesMaxLength = Math.max(timeSeriesMaxLength, data.length);
     }
 
-    if (settings.normalizePopulation) {
-      data = normalizeDataByPopulation(data, 'counties', county)
-    } else if (settings.normalizeDelta) {
-      data = normalizeDataByDelta(data);
-    } else if (settings.normalizeDoubling) {
-      data = normalizeDataByDoubling(data);
+    if (settings.transformMode === 'population') {
+      data = transformDataByPopulation(data, 'counties', county)
+    } else if (settings.transformMode === 'delta') {
+      data = transformDataByDelta(data);
+    } else if (settings.transformMode === 'doubling') {
+      data = transformDataByDoubling(data);
+    } else if (settings.transformMode === 'newVsExisting') {
+      data = transformNewVsExisting(data);
     }
 
     dataset = {
@@ -564,6 +617,7 @@ function drawChart() {
   };
 
   let yAxisLabel = '';
+  let xAxisLabel;
   if (settings.showConfirmed) {
     yAxisLabel = `Confirmed Cases`;
   } else if (settings.showDeaths) {
@@ -572,17 +626,28 @@ function drawChart() {
     yAxisLabel = `Recovered`;
   }
 
-  if (settings.normalizePopulation) {
-    yAxisLabel = `${yAxisLabel} per 100k people`;
-  } else if (settings.normalizeDelta) {
-    yAxisLabel = `${yAxisLabel} daily change`;
-  } else if (settings.normalizeDoubling) {
-    yAxisLabel = `${yAxisLabel} - Days to double`;
+  if (settings.transformMode === 'newVsExisting') {
+    // the new vs existing is a special case
+    const unitsTitle = yAxisLabel;
+    yAxisLabel = `New ${unitsTitle} weekly (log scale)`;
+    xAxisLabel = `Existing ${unitsTitle} (log scale)`;
+
+  } else {
+
+    if (settings.transformMode === 'population') {
+      yAxisLabel = `${yAxisLabel} per 100k people`;
+    } else if (settings.transformMode === 'delta') {
+      yAxisLabel = `${yAxisLabel} daily change`;
+    } else if (settings.transformMode === 'doubling') {
+      yAxisLabel = `${yAxisLabel} - Days to double`;
+    }
+
+    if (settings.plotType === 'logarithmic') {
+      yAxisLabel = `${yAxisLabel} (log scale)`;
+    }
   }
 
-  if (settings.plotType === 'logarithmic') {
-    yAxisLabel = `${yAxisLabel} (log scale)`;
-  }
+
 
   chartConfig.options.scales.yAxes[0].scaleLabel.labelString = yAxisLabel;
 
@@ -596,13 +661,82 @@ function drawChart() {
     chartConfig.data.labels = truncatedXAxis;
   }
 
+  if (settings.transformMode === 'newVsExisting') {
 
+    chartConfig.data.labels = null;
+
+    chartConfig.options.scales.yAxes = [
+      {
+        type: 'logarithmic',
+        ticks: {
+          callback: function (value, index, values) {
+            return fnum(value);
+          }
+        },
+      },
+    ];
+
+    chartConfig.options.scales.xAxes = [{
+        type: 'logarithmic',
+        ticks: {
+          callback: function (value, index, values) {
+            return fnum(value);
+          }
+        },
+        scaleLabel: {
+          display: true,
+          labelString: xAxisLabel,
+        }
+      },
+      {
+        position: 'top',
+        scaleLabel: {
+          display: true,
+          labelString: `github.com/octopicorn/covid19-charts    Data: Johns Hopkins CSSE, usafacts.org, NYT`,
+          fontColor: '#333',
+          fontSize: 8,
+          position: 'top'
+        }
+      }
+    ];
+    
+  } else {
+    chartConfig.options.scales.yAxes[0] = {
+      ...chart.options.scales.yAxes[0],
+      type: settings.plotType,
+      ticks: {
+        callback: function (value, index, values) {
+          if (settings.plotType === 'logarithmic') {
+            return fnum(value);
+          }
+          return Number(value.toString()); // pass tick values as a string into Number function
+        }
+      },
+    };
+
+    chartConfig.options.scales.xAxes = [
+      {
+        scaleLabel: {
+          display: true,
+          labelString: `github.com/octopicorn/covid19-charts    Data: Johns Hopkins CSSE, usafacts.org, NYT`,
+          fontColor: '#333',
+          fontSize: 8,
+        }
+      }
+    ];
+  }
 
   chart.data = chartConfig.data;
   chart.options = chartConfig.options;
   chart.update();
 }
 
+function disableChartScaleButtons() {
+  $('.button-change-chart-scale').prop('disabled', true);
+}
+function enableChartScaleButtons() {
+  $('.button-change-chart-scale').prop('disabled', false);
+}
 function updateChartType(newType) {
   if (chart) {
     chart.destroy();
@@ -661,36 +795,16 @@ function updateChartScale(newType) {
 
   drawChart();
 
-
 }
 
 function updateChartDataTransform(newType) {
 
-  if (newType === 'population') {
-    settings.normalizePopulation = true;
-    settings.normalizeDelta = false;
-    settings.normalizeDoubling = false;
-
-    chart.update();
-  } else if (newType === 'delta') {
-    settings.normalizePopulation = false;
-    settings.normalizeDelta = true;
-    settings.normalizeDoubling = false;
-
-    chart.update();
-  } else if (newType === 'doubling') {
-    settings.normalizePopulation = false;
-    settings.normalizeDelta = false;
-    settings.normalizeDoubling = true;
-
-    chart.update();
+  if (newType === 'none') {
+    settings.transformMode = null;
   } else {
-    settings.normalizePopulation = false;
-    settings.normalizeDelta = false;
-    settings.normalizeDoubling = false;
-
-    chart.update();
+    settings.transformMode = newType;
   }
+  chart.update();
 
   drawChart();
 
