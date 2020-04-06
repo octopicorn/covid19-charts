@@ -394,7 +394,7 @@ button:disabled {
     }
     #chart-content {
         /*height: 300px;*/
-        height: 75vh;
+        height: 65vh;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
     }
