@@ -10,14 +10,15 @@ let chartConfig;
 let isMobile;
 
 let settings = {
-  metric: 'confirmed',
-  snapTo: true,
-  snapToNumber: 100,
-  transformMode: null,
-  plotType: 'linear',
-  countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
-  states: [],
-  counties: [],
+  // metric: 'confirmed',
+  // snapTo: true,
+  // snapToNumber: 100,
+  // transformMode: null,
+  // plotType: 'linear',
+  // newInPastDays: 3,
+  // countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
+  // states: [],
+  // counties: [],
 }
 
 let areasOfInterest = {
@@ -258,6 +259,16 @@ function bindButtons(){
     updateQueryStringFromSettings();
   })
 
+  $('#new-in-past-days-input').on('input', function(e) {
+    e.preventDefault();
+    const newVal = Number($(this).val());
+    if (newVal !== NaN && newVal > 0) {
+      settings.newInPastDays = newVal;
+      drawChart();
+    }
+    updateQueryStringFromSettings();
+  })
+
   $('.clear-data').on('click', function (e) {
     e.preventDefault();
 
@@ -374,22 +385,44 @@ function transformDataByPopulation (data, group, name) {
 
 function transformDataByDelta (data) {
 
-  result = data.map((item, index) => {
-    if (index === 0) {
-      // first data point, delta is just the number - 0
-      return item;
+  const slidingWindowSize = settings.newInPastDays;
+
+  // this will hold the last n numbers used to gather a new cases number
+  const slidingWindow = [];
+
+  const result = [];
+  data.forEach((item, index) => {
+
+    if (slidingWindow.length < slidingWindowSize -1) {
+      // first, just skip the first n-1 records to gather the first sliding window
+      slidingWindow.push(item);
+
+    } else {
+
+      // add newest item to sliding window
+      slidingWindow.push(item);
+
+      // add up the numbers of new cases in the sliding window
+      const earliestItem = slidingWindow[0];
+      const latestItem = slidingWindow[slidingWindow.length - 1];
+
+      const newCases = latestItem - earliestItem; // new cases = current tally minus last week's tally
+
+      result.push(newCases);
+
+      // remove oldest element from sliding window
+      slidingWindow.shift();
+
     }
-    // return delta between data point and last one
-    return item - data[index - 1];
   });
 
   return result;
 
 }
 
-function transformDataByDoubling (data) {
+function transformDataByDoubling (data, isDebug) {
   let daysToDouble = 6; // start with a sensible default
-  result = data.map((item, index) => {
+  const result = data.map((item, index) => {
     let prevItem;
     if (index === 0) {
       // first data point, delta is just the number - 0
@@ -401,7 +434,8 @@ function transformDataByDoubling (data) {
     // by what percent is today greater than yesterday?
     const rate = (item/prevItem) - 1;
 
-    if (rate === 0) {
+    let newDaysToDouble;
+    if (rate <= 0) {
       // instead of showing Infinity on the chart, just show value as not having changed
       newDaysToDouble = daysToDouble;
     } else {
@@ -929,6 +963,9 @@ function initializeInputs() {
   // transform
   $('.button-change-chart-transform').removeClass('selected');
   $(`.button-change-chart-transform[data-type=${settings.transformMode}]`).addClass('selected');
+
+  // new in past days num
+  $('#new-in-past-days').val(Number(settings.newInPastDays));
 }
 
 function updateQueryStringFromSettings() {
@@ -960,6 +997,7 @@ $(function () {
     snapToNumber: 100,
     transformMode: '',
     plotType: 'linear',
+    newInPastDays: 3,
   }
 
   let defaultAreasOfInterest = {
