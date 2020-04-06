@@ -1000,10 +1000,25 @@ $(function () {
     newInPastDays: 3,
   }
 
-  let defaultAreasOfInterest = {
-    countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
-    states: [],
-    counties: [],
+  let defaultAreasOfInterest;
+
+  // if any locations were pre-picked, just forget about setting any default locations
+  if (queryObject.countries && queryObject.countries.length
+    || queryObject.states && queryObject.states.length
+    || queryObject.counties && queryObject.counties.length ) {
+
+    defaultAreasOfInterest = {
+      countries: [],
+      states: [],
+      counties: [],
+    }
+  } else {
+    // if there are no locations pre-picked in url, pick a handful of default countries to show
+    defaultAreasOfInterest = {
+      countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
+      states: [],
+      counties: [],
+    }
   }
 
   const currentQueryObject = {
