@@ -1,3 +1,7 @@
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+}
+
 let menuData;
 let covData;
 let populationsData;
@@ -6,23 +10,18 @@ let chartConfig;
 let isMobile;
 
 let settings = {
-  showConfirmed: true,
-  showDeaths: false,
-  showRecovered: false,
+  metric: 'confirmed',
   snapTo: true,
   snapToNumber: 100,
   transformMode: null,
-  normalizePopulation: false,
-  normalizeDelta: false,
-  normalizeDoubling: false,
-  normalizeNewVsExisting: false,
   plotType: 'linear',
-}
-
-let areasOfInterest = {
   countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
   states: [],
   counties: [],
+}
+
+let areasOfInterest = {
+
 }
 
 let detectMobile = {
@@ -80,7 +79,7 @@ function renderMenuCountries(overrideList) {
     const $menuList = $('#menu-countries');
     $menuList.empty();
     for (const country of list){
-      const selected = areasOfInterest.countries.includes(country) ? 'selected' : '';
+      const selected = settings.countries.includes(country) ? 'selected' : '';
       $menuList.append(`<div class="menu-list-item ${selected}" data-name="${country}" data-list-type="countries" data-type="country">${country}</div>`);
     }
   }
@@ -92,7 +91,7 @@ function renderMenuStates(overrideList) {
     const $menuList = $('#menu-states');
     $menuList.empty();
     for (const state of list){
-      const selected = areasOfInterest.states.includes(state) ? 'selected' : '';
+      const selected = settings.states.includes(state) ? 'selected' : '';
       $menuList.append(`<div class="menu-list-item ${selected}" data-name="${state}" data-list-type="states" data-type="state">${state}</div>`);
     }
   }
@@ -105,7 +104,7 @@ function renderMenuCounties(overrideList) {
     $menuList.empty();
     for (const county of list){
       const areaName = `${county[0]}, ${county[1]}`;
-      const selected = areasOfInterest.counties.includes(areaName) ? 'selected' : '';
+      const selected = settings.counties.includes(areaName) ? 'selected' : '';
       $menuList.append(`<div class="menu-list-item ${selected}" data-name="${areaName}" data-list-type="counties" data-type="county">${areaName}</div>`);
     }
   }
@@ -141,13 +140,13 @@ function bindMenus() {
 
       switch (areaType) {
         case 'country':
-          listToRemoveFrom = areasOfInterest.countries;
+          listToRemoveFrom = settings.countries;
           break;
         case 'state':
-          listToRemoveFrom = areasOfInterest.states;
+          listToRemoveFrom = settings.states;
           break;
         case 'county':
-          listToRemoveFrom = areasOfInterest.counties;
+          listToRemoveFrom = settings.counties;
           break;
       }
       if (listToRemoveFrom) {
@@ -169,13 +168,13 @@ function bindMenus() {
 
       switch (areaType) {
         case 'country':
-          listToAddTo = areasOfInterest.countries;
+          listToAddTo = settings.countries;
           break;
         case 'state':
-          listToAddTo = areasOfInterest.states;
+          listToAddTo = settings.states;
           break;
         case 'county':
-          listToAddTo = areasOfInterest.counties;
+          listToAddTo = settings.counties;
           break;
       }
       if (listToAddTo) {
@@ -207,6 +206,8 @@ function bindButtons(){
 
     const newScaleType = $(this).data('type');
     updateChartScale(newScaleType);
+
+    updateQueryStringFromSettings();
   });
 
   $('.button-change-chart-transform').on('click', function() {
@@ -215,6 +216,8 @@ function bindButtons(){
 
     const newType = $(this).data('type');
     updateChartDataTransform(newType);
+
+    updateQueryStringFromSettings();
   });
 
   $('.button-change-timeseries-data-type').on('click', function() {
@@ -222,8 +225,10 @@ function bindButtons(){
     $(this).addClass('selected');
 
     const newDataType = $(this).data('type');
-    updateTimeseriesDataType(newDataType);
+    updateTimeseriesMetric(newDataType);
     drawChart();
+
+    updateQueryStringFromSettings()
   });
 
   $('#chart-palette').on('change', function() {
@@ -240,6 +245,7 @@ function bindButtons(){
       $(this).prop("checked", undefined);
     }
     drawChart();
+    updateQueryStringFromSettings();
   });
 
   $('#snap-to-days-input').on('input', function(e) {
@@ -249,6 +255,7 @@ function bindButtons(){
       settings.snapToNumber = newVal;
       drawChart();
     }
+    updateQueryStringFromSettings();
   })
 
   $('.clear-data').on('click', function (e) {
@@ -261,8 +268,9 @@ function bindButtons(){
 
     // now clear the group, and re-render the chart
     const group = $(this).data('group');
-    areasOfInterest[group] = [];
+    settings[group] = [];
     drawChart();
+    updateQueryStringFromSettings();
   });
 
   $('#clear-all-chart-data').on('click', function(e) {
@@ -272,11 +280,11 @@ function bindButtons(){
     $('.menu-list-item').each(function() {
       $(this).removeClass('selected')
     });
-    areasOfInterest.countries = [];
-    areasOfInterest.states = [];
-    areasOfInterest.counties = [];
+    settings.countries = [];
+    settings.states = [];
+    settings.counties = [];
     drawChart();
-
+    updateQueryStringFromSettings();
   })
 
   $('.search-menu-list-input').on('input', function(e) {
@@ -286,7 +294,7 @@ function bindButtons(){
     } else {
       showClearListIcon(group);
     }
-    searchList(group, $(this).val())
+    searchList(group, $(this).val());
   });
 
   $('.clear-list-search').on('click', function(e) {
@@ -481,16 +489,8 @@ function drawChart() {
     pointRadius,
   };
 
-  let dataCategory = 'Confirmed';
-  if (settings.showDeaths) {
-    dataCategory = 'Deaths';
-  } else if (settings.showRecovered) {
-    dataCategory = 'Recovered';
-  }
-
+  let dataCategory = settings.metric.capitalize();
   let timeSeriesMaxLength = 0;
-
-  let xAxes = [];
 
   if (settings.transformMode === 'newVsExisting') {
     disableChartScaleButtons();
@@ -499,7 +499,7 @@ function drawChart() {
   }
 
   // plot countries
-  for (country of areasOfInterest.countries) {
+  for (country of settings.countries) {
 
     let data = covData.timeseries.countries[country].timeseriesByCategory[dataCategory] || [];
 
@@ -529,7 +529,7 @@ function drawChart() {
   }
 
   // plot states
-  for (state of areasOfInterest.states) {
+  for (state of settings.states) {
 
     let data = covData.timeseries.states[state].timeseriesByCategory[dataCategory] || [];
     const label = state;
@@ -559,7 +559,7 @@ function drawChart() {
   }
 
   // plot counties
-  for (county of areasOfInterest.counties) {
+  for (county of settings.counties) {
     let data = covData.timeseries.counties[county].timeseriesByCategory[dataCategory] || [];
     const label = county;
 
@@ -588,7 +588,7 @@ function drawChart() {
   }
 
   let title = ''
-  if (settings.showConfirmed) {
+  if (settings.metric === 'confirmed') {
     title = 'Confirmed Cases';
   } else {
     title = dataCategory;
@@ -601,11 +601,11 @@ function drawChart() {
 
   let yAxisLabel = '';
   let xAxisLabel;
-  if (settings.showConfirmed) {
+  if (settings.metric === 'confirmed') {
     yAxisLabel = `Confirmed Cases`;
-  } else if (settings.showDeaths) {
+  } else if (settings.metric === 'deaths') {
     yAxisLabel = `Deaths`;
-  } else if (settings.showRecovered) {
+  } else if (settings.metric === 'recovered') {
     yAxisLabel = `Recovered`;
   }
 
@@ -793,40 +793,8 @@ function updateChartDataTransform(newType) {
 
 }
 
-function updateTimeseriesDataType(confirmedOrDeaths) {
-  if (confirmedOrDeaths === 'confirmed') {
-    settings.showConfirmed = true;
-    settings.showDeaths = false;
-    settings.showRecovered = false;
-  } else if (confirmedOrDeaths === 'deaths') {
-    settings.showConfirmed = false;
-    settings.showDeaths = true;
-    settings.showRecovered = false;
-  } else if (confirmedOrDeaths === 'recovered') {
-    settings.showConfirmed = false;
-    settings.showDeaths = false;
-    settings.showRecovered = true;
-  } else if (confirmedOrDeaths === 'both') {
-    settings.showConfirmed = true;
-    settings.showDeaths = true;
-    settings.showRecovered = false;
-  }
-
-  // side effects on snapTo feature
-  if (settings.showConfirmed && settings.showDeaths) {
-    // uncheck and disable the snapTo feature if showing both
-    $('#option-container-snapTo100').addClass('disabled');
-    $('#option-container-snapTo100 input').prop("checked", false).attr('disabled', 'disabled');
-    $('#option-container-snapTo1').addClass('disabled');
-    $('#option-container-snapTo1 input').prop("checked", false).attr('disabled', 'disabled');
-  } else {
-    // restore the snapTo feature if showing just one
-    $('#option-container-snapTo100').removeClass('disabled');
-    $('#option-container-snapTo100 input').removeAttr('disabled');
-    $('#option-container-snapTo1').removeClass('disabled');
-    $('#option-container-snapTo1 input').removeAttr('disabled');
-  }
-
+function updateTimeseriesMetric(metric) {
+  settings.metric = metric;
 }
 
 function updateChartPalette(newPalette) {
@@ -893,29 +861,79 @@ function getUrlQueryAsObject() {
   let result = {};
   // get URL query string
   let params = window.location.search;
-  // remove the '?' character
-  params = params.substr(1);
-  // split the query parameters
-  let queryParamArray = params.split('&');
-  // iterate over parameter array
-  queryParamArray.forEach(function(queryParam) {
-    // split the query parameter over '='
-    let item = queryParam.split('=');
+  if (params) {
+    // remove the '?' character
+    params = params.substr(1);
+    // split the query parameters
+    let queryParamArray = params.split('&');
+    // iterate over parameter array
+    queryParamArray.forEach(function (queryParam) {
+      // split the query parameter over '='
+      let item = queryParam.split('=');
 
-    // save each as single value or expand into array when duplicates found
-    if (typeof result[item[0]] !== 'undefined') {
-      if (!Array.isArray(result[item[0]])) {
-        result[item[0]] = [result[item[0]]];
+      let value = decodeURIComponent(item[1]);
+
+      if (value === 'true') {
+        value = true;
+      } else if (value === 'false') {
+        value = false;
       }
-      result[item[0]].push(decodeURIComponent(item[1]));
-    } else {
-      result[item[0]] = decodeURIComponent(item[1]);
-    }
 
-  });
+      // save each as single value or expand into array when duplicates found
+      if (typeof result[item[0]] !== 'undefined') {
+        if (!Array.isArray(result[item[0]])) {
+          result[item[0]] = [result[item[0]]];
+        }
+        result[item[0]].push(value);
+      } else {
+        result[item[0]] = value;
+      }
 
+    });
+
+  }
 
   return result;
+}
+
+function queryObjectToUrl () {
+
+  const queryObject = {
+    ...settings,
+  }
+
+  let resultArray = [];
+
+  Object.keys(queryObject).forEach(key => {
+    if (Array.isArray(queryObject[key])) {
+      queryObject[key].forEach(item => {
+        resultArray.push(`${key}=${item}`);
+      });
+    } else {
+      resultArray.push(`${key}=${queryObject[key]}`);
+    }
+  });
+
+  return resultArray.join('&');
+}
+
+function initializeInputs() {
+  // set the value of the checkbox
+  $('#snapToToggle').prop('checked', settings.snapTo);
+  $('#snap-to-days-input').val(Number(settings.snapToNumber));
+
+  // linear/log
+  $('.button-change-chart-scale').removeClass('selected');
+  $(`.button-change-chart-scale[data-type=${settings.plotType}]`).addClass('selected');
+
+  // transform
+  $('.button-change-chart-transform').removeClass('selected');
+  $(`.button-change-chart-transform[data-type=${settings.transformMode}]`).addClass('selected');
+}
+
+function updateQueryStringFromSettings() {
+  const url = queryObjectToUrl();
+  window.history.replaceState(settings, null, `/?${url}`);
 }
 
 $(function () {
@@ -932,27 +950,36 @@ $(function () {
 
   const cachebuster =`${yearToday}-${monthToday}-${dayToday}`;
 
-
-
   let viewState;
 
-  const defaultQueryParams = {
-
-  }
   let queryObject = getUrlQueryAsObject();
 
   let defaultSettings = {
     metric: 'confirmed', // confirmed | deaths | resolved
     snapTo: true,
     snapToNumber: 100,
-    normalizePopulation: false,
-    normalizeDelta: false,
-    normalizeDoubling: false,
+    transformMode: '',
     plotType: 'linear',
   }
 
-  console.log(queryObject)
+  let defaultAreasOfInterest = {
+    countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
+    states: [],
+    counties: [],
+  }
 
+  const currentQueryObject = {
+    ...defaultSettings,
+    ...defaultAreasOfInterest,
+    ...queryObject,
+  };
+
+  settings = {...currentQueryObject};
+
+  updateQueryStringFromSettings();
+
+  // init inputs
+  initializeInputs();
 
   $.when(
 
