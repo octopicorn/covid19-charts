@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:image" content="https://valis.pub/fb-thumb3.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://valis.pub/hospitals" />
+    <meta property="og:title" content="covid-19 US Hospitals Tracker" />
+    <meta property="og:description" content="Keep track of ICU beds, ventilator capcity at US hopsitals" />
+    <title>covid-19 US Hospitals Tracker</title>
+
+    <link href="/js/fontawesome-free-5.13.0-web/css/all.css" rel="stylesheet">
+
+    <script type="text/javascript">
+      // use cachebuster random to ensure new script gets loaded
+      var cachebuster = Math.round(new Date().getTime() / 1000);
+
+      document.write('<li' + `nk href="/hospitals/main.css?cb=${cachebuster}" rel="stylesheet" type="text/css"/>`);
+    </script>
+
+    <link href="/js/chartjs/Chart.min.css" rel="stylesheet" type="text/css"/>
+
+    <title>US Hospitals Beds/Ventilator Capacity</title>
+
+  </head>
+  <body>
+
+        <div id="app_container"></div>
+
+    <!-- Load React. -->
+    <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+    <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Load our React component. -->
+    <script src="/react/hospitals.js"></script>
+
+  </body>
+</html>
