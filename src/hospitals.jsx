@@ -106,7 +106,7 @@ class HospitalsApp extends React.Component {
     } else {
       icon = <span></span>
     }
-    return <th onClick={() => this.onSort(column)}>
+    return <th  className="sticky" onClick={() => this.onSort(column)}>
       <div style={{display: 'flex'}}>
         <div style={{width: 15}}>{icon}</div>
         <div>{column}</div>
@@ -179,24 +179,24 @@ class HospitalsApp extends React.Component {
     const stateOptions = Object.values(statesUSA).map(item => <option key={`option-${item}`}>{item}</option>);
 
     return <div id="hospitals">
-        <header>
+      {true && <header>
           <div id="header-content">
             <div>
               <h1>covid-19 Surge Planning</h1>
               <h2>USA Hospitals Beds/Ventilator Capacity</h2>
             </div>
-            <div class="header-links">
-              <div class="link">
-                <a class="img-link" href="https://github.com/octopicorn/covid19-charts" target="_blank"><img src="/github-logo.svg" /></a>
-                <a class="text-link" href="https://github.com/octopicorn/covid19-charts" target="_blank">https://github.com/octopicorn/covid19-charts</a>
+            <div className="header-links">
+              <div className="link">
+                <a className="img-link" href="https://github.com/octopicorn/covid19-charts" target="_blank"><img src="/github-logo.svg" /></a>
+                <a className="text-link" href="https://github.com/octopicorn/covid19-charts" target="_blank">https://github.com/octopicorn/covid19-charts</a>
               </div>
-              <div class="link">
-                <a class="img-link" href="https://www.facebook.com/groups/pandemicsurgeplan/" target="_blank"><img src="/fb-logo.png" /></a>
-                <a class="text-link" href="https://www.facebook.com/groups/pandemicsurgeplan/" target="_blank">https://www.facebook.com/groups/pandemicsurgeplan/</a>
+              <div className="link">
+                <a className="img-link" href="https://www.facebook.com/groups/pandemicsurgeplan/" target="_blank"><img src="/fb-logo.png" /></a>
+                <a className="text-link" href="https://www.facebook.com/groups/pandemicsurgeplan/" target="_blank">https://www.facebook.com/groups/pandemicsurgeplan/</a>
               </div>
-              <div class="link">
+              <div className="link">
                 <a className="img-link" href="https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629" target="_blank"><i className={`fa fa-info-circle`}></i></a>
-                <a href="https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629" target="_blank">data source</a>
+                <a className="data-link" href="https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629" target="_blank">data source</a>
               </div>
             </div>
           </div>
@@ -210,11 +210,11 @@ class HospitalsApp extends React.Component {
               <strong>{results.length || 0} Results</strong>
             </div>
           </div>
-        </header>
+        </header>}
 
         <div id="content">
 
-          <div style={{borderTop: 'solid 1px #333'}}>
+
             <table>
               <thead>
                 <tr>
@@ -261,7 +261,8 @@ class HospitalsApp extends React.Component {
               })}
               </tbody>
             </table>
-          </div>
+
+
         </div>
 
       </div>

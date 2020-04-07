@@ -117,7 +117,7 @@ var HospitalsApp = function (_React$Component) {
       }
       return React.createElement(
         "th",
-        { onClick: function onClick() {
+        { className: "sticky", onClick: function onClick() {
             return _this.onSort(column);
           } },
         React.createElement(
@@ -225,7 +225,7 @@ var HospitalsApp = function (_React$Component) {
       return React.createElement(
         "div",
         { id: "hospitals" },
-        React.createElement(
+        true && React.createElement(
           "header",
           null,
           React.createElement(
@@ -247,38 +247,38 @@ var HospitalsApp = function (_React$Component) {
             ),
             React.createElement(
               "div",
-              { "class": "header-links" },
+              { className: "header-links" },
               React.createElement(
                 "div",
-                { "class": "link" },
+                { className: "link" },
                 React.createElement(
                   "a",
-                  { "class": "img-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
+                  { className: "img-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
                   React.createElement("img", { src: "/github-logo.svg" })
                 ),
                 React.createElement(
                   "a",
-                  { "class": "text-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
+                  { className: "text-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
                   "https://github.com/octopicorn/covid19-charts"
                 )
               ),
               React.createElement(
                 "div",
-                { "class": "link" },
+                { className: "link" },
                 React.createElement(
                   "a",
-                  { "class": "img-link", href: "https://www.facebook.com/groups/pandemicsurgeplan/", target: "_blank" },
+                  { className: "img-link", href: "https://www.facebook.com/groups/pandemicsurgeplan/", target: "_blank" },
                   React.createElement("img", { src: "/fb-logo.png" })
                 ),
                 React.createElement(
                   "a",
-                  { "class": "text-link", href: "https://www.facebook.com/groups/pandemicsurgeplan/", target: "_blank" },
+                  { className: "text-link", href: "https://www.facebook.com/groups/pandemicsurgeplan/", target: "_blank" },
                   "https://www.facebook.com/groups/pandemicsurgeplan/"
                 )
               ),
               React.createElement(
                 "div",
-                { "class": "link" },
+                { className: "link" },
                 React.createElement(
                   "a",
                   { className: "img-link", href: "https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629", target: "_blank" },
@@ -286,7 +286,7 @@ var HospitalsApp = function (_React$Component) {
                 ),
                 React.createElement(
                   "a",
-                  { href: "https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629", target: "_blank" },
+                  { className: "data-link", href: "https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629", target: "_blank" },
                   "data source"
                 )
               )
@@ -320,125 +320,121 @@ var HospitalsApp = function (_React$Component) {
           "div",
           { id: "content" },
           React.createElement(
-            "div",
-            { style: { borderTop: 'solid 1px #333' } },
+            "table",
+            null,
             React.createElement(
-              "table",
+              "thead",
               null,
               React.createElement(
-                "thead",
+                "tr",
                 null,
-                React.createElement(
-                  "tr",
-                  null,
-                  this.renderColumn('COUNTY_NAME'),
-                  this.renderColumn('NUM_ICU_BEDS'),
-                  this.renderColumn('ADULT_ICU_BEDS'),
-                  this.renderColumn('PEDI_ICU_BEDS'),
-                  this.renderColumn('BED_UTILIZATION'),
-                  this.renderColumn('AVG_VENTILATOR_USAGE'),
-                  this.renderColumn('HOSPITAL_NAME'),
-                  this.renderColumn('HOSPITAL_TYPE'),
-                  this.renderColumn('HQ_ADDRESS'),
-                  this.renderColumn('HQ_ADDRESS1'),
-                  this.renderColumn('HQ_CITY'),
-                  this.renderColumn('HQ_STATE'),
-                  this.renderColumn('HQ_ZIP_CODE'),
-                  this.renderColumn('NUM_LICENSED_BEDS'),
-                  this.renderColumn('NUM_STAFFED_BEDS'),
-                  this.renderColumn('Potential_Increase_In_Bed_Capac')
-                )
-              ),
-              React.createElement(
-                "tbody",
-                null,
-                results.map(function (item, index) {
-                  return React.createElement(
-                    "tr",
-                    { key: "row-" + index },
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.COUNTY_NAME
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.NUM_ICU_BEDS
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.ADULT_ICU_BEDS
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.PEDI_ICU_BEDS
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.BED_UTILIZATION
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.AVG_VENTILATOR_USAGE
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.HOSPITAL_NAME
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.HOSPITAL_TYPE
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.HQ_ADDRESS
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.HQ_ADDRESS1
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.HQ_CITY
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.HQ_STATE
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.HQ_ZIP_CODE
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.NUM_LICENSED_BEDS
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.NUM_STAFFED_BEDS
-                    ),
-                    React.createElement(
-                      "td",
-                      null,
-                      item.attributes.Potential_Increase_In_Bed_Capac
-                    )
-                  );
-                })
+                this.renderColumn('COUNTY_NAME'),
+                this.renderColumn('NUM_ICU_BEDS'),
+                this.renderColumn('ADULT_ICU_BEDS'),
+                this.renderColumn('PEDI_ICU_BEDS'),
+                this.renderColumn('BED_UTILIZATION'),
+                this.renderColumn('AVG_VENTILATOR_USAGE'),
+                this.renderColumn('HOSPITAL_NAME'),
+                this.renderColumn('HOSPITAL_TYPE'),
+                this.renderColumn('HQ_ADDRESS'),
+                this.renderColumn('HQ_ADDRESS1'),
+                this.renderColumn('HQ_CITY'),
+                this.renderColumn('HQ_STATE'),
+                this.renderColumn('HQ_ZIP_CODE'),
+                this.renderColumn('NUM_LICENSED_BEDS'),
+                this.renderColumn('NUM_STAFFED_BEDS'),
+                this.renderColumn('Potential_Increase_In_Bed_Capac')
               )
+            ),
+            React.createElement(
+              "tbody",
+              null,
+              results.map(function (item, index) {
+                return React.createElement(
+                  "tr",
+                  { key: "row-" + index },
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.COUNTY_NAME
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.NUM_ICU_BEDS
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.ADULT_ICU_BEDS
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.PEDI_ICU_BEDS
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.BED_UTILIZATION
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.AVG_VENTILATOR_USAGE
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HOSPITAL_NAME
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HOSPITAL_TYPE
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HQ_ADDRESS
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HQ_ADDRESS1
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HQ_CITY
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HQ_STATE
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HQ_ZIP_CODE
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.NUM_LICENSED_BEDS
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.NUM_STAFFED_BEDS
+                  ),
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.Potential_Increase_In_Bed_Capac
+                  )
+                );
+              })
             )
           )
         )

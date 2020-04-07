@@ -16,9 +16,6 @@ h2{
     padding: 5px 0;
 }
 header {
-    position: fixed;
-    top: 0;
-    z-index: 1;
     display: flex;
     justify-content: flex-start;
     width: 100%;
@@ -34,28 +31,39 @@ header img {
 header select {
     color: #FFF;
 }
+
 table {
-    border-collapse: collapse;
+    text-align: left;
     position: relative;
+    border-collapse: collapse;
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-th {
-    cursor: pointer;
-    background-color: #FFF;
-}
 th, td {
-    margin: 0;
-    padding: 5px;
     border-bottom: solid 1px #333;
     border-right: solid 1px #333;
 }
+
+th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: white;
+    border-bottom: solid 1px #000;
+}
+
 #hospitals {
-    overflow-y: scroll;
 }
 
 
 #content {
-    padding: 111px 0;
+    height: 100vh;
+    overflow-y: scroll;
+    /*padding: 111px 0;*/
 }
 
 #picker {
@@ -94,20 +102,36 @@ th, td {
 /* mobile devices */
 @media (max-width:992px) {
 
+    h1 {font-size: 10px}
+    h2 {font-size: 10px}
+
     header {
         padding: 10px 10px 10px 10px;
         display: block;
     }
+    #header-content {
+        display: flex;
+        align-content: flex-start;
+    }
+    .header-links .link {
+        padding: 2px;
+        border-radius: 10px;
+    }
+    .header-links .link a img {
+        padding-right: 0;
+    }
+    .header-links .data-link {
+        font-size: 10px;
+    }
     #content {
-        padding-top: 150px;
+        /*padding-top: 150px;*/
     }
     #picker {
         /*position: fixed;*/
         /*top: 111px;*/
         /*z-index: 1;*/
     }
-    table {
-    }
+
     .github-link {
         font-size: 12px;
     }
@@ -126,7 +150,7 @@ th, td {
        display: flex;
     }
     #content {
-        padding-top: 111px;
+        /*padding-top: 111px;*/
     }
 }
 
