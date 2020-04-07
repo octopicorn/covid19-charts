@@ -1,0 +1,144 @@
+body {
+    font-family: "Arial";
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background-color: #EEE;
+}
+
+h1 {
+    margin: 0;
+    font-size: 20px;
+}
+h2{
+    margin: 0;
+    font-size: 16px;
+    padding: 5px 0;
+}
+header {
+    position: fixed;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    background-color: #333;
+    color: #FFF;
+    padding: 10px;
+}
+header img {
+    width: 20px;
+    height: 20px;
+    vertical-align: bottom;
+}
+header select {
+    color: #FFF;
+}
+table {
+    border-collapse: collapse;
+    position: relative;
+}
+
+th {
+    cursor: pointer;
+    background-color: #FFF;
+}
+th, td {
+    margin: 0;
+    padding: 5px;
+    border-bottom: solid 1px #333;
+    border-right: solid 1px #333;
+}
+#hospitals {
+    overflow-y: scroll;
+}
+
+
+#content {
+    padding: 111px 0;
+}
+
+#picker {
+    /*background-color: #EEE;*/
+    /*width: 100%;*/
+}
+
+.header-links {
+    display: flex;
+}
+
+.header-links .link {
+    align-self: center;
+    background-color: #FFF;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 0 5px;
+}
+
+.header-links .link a {
+    display: inline-block;
+    text-decoration: none;
+    color: cornflowerblue;
+}
+
+.header-links .link a img {
+    padding-right: 5px;
+}
+.header-links .link a i {
+    color: #000;
+    padding-right: 5px;
+}
+
+
+
+/* mobile devices */
+@media (max-width:992px) {
+
+    header {
+        padding: 10px 10px 10px 10px;
+        display: block;
+    }
+    #content {
+        padding-top: 150px;
+    }
+    #picker {
+        /*position: fixed;*/
+        /*top: 111px;*/
+        /*z-index: 1;*/
+    }
+    table {
+    }
+    .github-link {
+        font-size: 12px;
+    }
+
+
+    .header-links .link .text-link {
+        display: none;
+    }
+
+    .github-link a#github-text-link { display: none; }
+
+}
+
+@media (max-width:992px) and (orientation: landscape) {
+    #header-content {
+       display: flex;
+    }
+    #content {
+        padding-top: 111px;
+    }
+}
+
+
+
+/* desktop computer screens */
+@media (min-width:993px){
+
+
+}
+
+/* tablet */
+@media (min-width:760px) and (max-width:1024px){
+
+}
