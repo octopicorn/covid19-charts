@@ -212,7 +212,7 @@ class HospitalsApp extends React.Component {
         </header>
 
         <div id="content">
-          
+
             <table>
               <thead>
                 <tr>
