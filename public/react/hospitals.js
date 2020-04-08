@@ -79,7 +79,6 @@ var HospitalsApp = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (HospitalsApp.__proto__ || Object.getPrototypeOf(HospitalsApp)).call(this, props));
 
     _this.fetchResultsByState = function (stateCode) {
-      console.log('fetching data for', stateCode);
       // create a new XMLHttpRequest
       var xhr = new XMLHttpRequest();
       // get a callback when the server responds
@@ -99,7 +98,6 @@ var HospitalsApp = function (_React$Component) {
     _this.onSelectState = function (e) {
       // e.preventDefault();
       var state = e.target.value;
-      console.log('selected state', state);
       _this.fetchResultsByState(state);
     };
 
@@ -125,13 +123,13 @@ var HospitalsApp = function (_React$Component) {
           { style: { display: 'flex' } },
           React.createElement(
             "div",
-            { style: { width: 15 } },
+            { style: { width: 20, padding: 5 } },
             icon
           ),
           React.createElement(
             "div",
             null,
-            column
+            column.replace(/_/g, ' ')
           )
         )
       );
@@ -148,13 +146,13 @@ var HospitalsApp = function (_React$Component) {
       var newSortAsc = sortAsc;
       if (column === sortColumn) {
         newSortAsc = !newSortAsc;
+      } else {
+        newSortAsc = true;
       }
 
       newResults.sort(function (inputA, inputB) {
         var a = void 0;
         var b = void 0;
-
-        console.log('sorting', inputA.attributes[column]);
 
         if (typeof inputA.attributes[column] === 'string') {
           a = inputA.attributes[column].toLowerCase();
@@ -213,7 +211,6 @@ var HospitalsApp = function (_React$Component) {
         return null;
       }
 
-      console.log(results);
       var stateOptions = Object.values(statesUSA).map(function (item) {
         return React.createElement(
           "option",
@@ -225,7 +222,7 @@ var HospitalsApp = function (_React$Component) {
       return React.createElement(
         "div",
         { id: "hospitals" },
-        true && React.createElement(
+        React.createElement(
           "header",
           null,
           React.createElement(
@@ -242,26 +239,12 @@ var HospitalsApp = function (_React$Component) {
               React.createElement(
                 "h2",
                 null,
-                "USA Hospitals Beds/Ventilator Capacity"
+                "USA Hospitals Bed/Ventilator Capacity"
               )
             ),
             React.createElement(
               "div",
               { className: "header-links" },
-              React.createElement(
-                "div",
-                { className: "link" },
-                React.createElement(
-                  "a",
-                  { className: "img-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
-                  React.createElement("img", { src: "/github-logo.svg" })
-                ),
-                React.createElement(
-                  "a",
-                  { className: "text-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
-                  "https://github.com/octopicorn/covid19-charts"
-                )
-              ),
               React.createElement(
                 "div",
                 { className: "link" },
@@ -286,8 +269,22 @@ var HospitalsApp = function (_React$Component) {
                 ),
                 React.createElement(
                   "a",
-                  { className: "data-link", href: "https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629", target: "_blank" },
+                  { className: "text-link", href: "https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629", target: "_blank" },
                   "data source"
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "link" },
+                React.createElement(
+                  "a",
+                  { className: "img-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
+                  React.createElement("img", { src: "/github-logo.svg" })
+                ),
+                React.createElement(
+                  "a",
+                  { className: "text-link", href: "https://github.com/octopicorn/covid19-charts", target: "_blank" },
+                  "https://github.com/octopicorn/covid19-charts"
                 )
               )
             )
@@ -299,17 +296,23 @@ var HospitalsApp = function (_React$Component) {
               "div",
               null,
               React.createElement(
+                "div",
+                { style: { display: 'flex' } },
+                React.createElement(
+                  "div",
+                  { style: { padding: '2px 5px' } },
+                  React.createElement("i", { className: "fa fa-star", style: { color: 'gold' } }),
+                  " Select State"
+                )
+              ),
+              React.createElement(
                 "select",
                 { defaultValue: selectedState, onChange: this.onSelectState },
                 stateOptions
-              )
-            ),
-            React.createElement(
-              "div",
-              { style: { marginLeft: 25 } },
+              ),
               React.createElement(
-                "strong",
-                null,
+                "span",
+                { style: { paddingLeft: 5, fontWeight: 'bold' } },
                 results.length || 0,
                 " Results"
               )
@@ -328,13 +331,13 @@ var HospitalsApp = function (_React$Component) {
               React.createElement(
                 "tr",
                 null,
+                this.renderColumn('HOSPITAL_NAME'),
                 this.renderColumn('COUNTY_NAME'),
                 this.renderColumn('NUM_ICU_BEDS'),
                 this.renderColumn('ADULT_ICU_BEDS'),
                 this.renderColumn('PEDI_ICU_BEDS'),
                 this.renderColumn('BED_UTILIZATION'),
                 this.renderColumn('AVG_VENTILATOR_USAGE'),
-                this.renderColumn('HOSPITAL_NAME'),
                 this.renderColumn('HOSPITAL_TYPE'),
                 this.renderColumn('HQ_ADDRESS'),
                 this.renderColumn('HQ_ADDRESS1'),
@@ -353,6 +356,11 @@ var HospitalsApp = function (_React$Component) {
                 return React.createElement(
                   "tr",
                   { key: "row-" + index },
+                  React.createElement(
+                    "td",
+                    null,
+                    item.attributes.HOSPITAL_NAME
+                  ),
                   React.createElement(
                     "td",
                     null,
@@ -382,11 +390,6 @@ var HospitalsApp = function (_React$Component) {
                     "td",
                     null,
                     item.attributes.AVG_VENTILATOR_USAGE
-                  ),
-                  React.createElement(
-                    "td",
-                    null,
-                    item.attributes.HOSPITAL_NAME
                   ),
                   React.createElement(
                     "td",

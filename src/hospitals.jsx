@@ -74,7 +74,6 @@ class HospitalsApp extends React.Component {
   }
 
   fetchResultsByState = (stateCode) => {
-    console.log('fetching data for', stateCode)
     // create a new XMLHttpRequest
     const xhr = new XMLHttpRequest()
     // get a callback when the server responds
@@ -93,7 +92,6 @@ class HospitalsApp extends React.Component {
   onSelectState = (e) => {
     // e.preventDefault();
     const state = e.target.value;
-    console.log('selected state', state)
     this.fetchResultsByState(state);
   }
 
@@ -108,8 +106,8 @@ class HospitalsApp extends React.Component {
     }
     return <th  className="sticky" onClick={() => this.onSort(column)}>
       <div style={{display: 'flex'}}>
-        <div style={{width: 15}}>{icon}</div>
-        <div>{column}</div>
+        <div style={{width: 20, padding: 5}}>{icon}</div>
+        <div>{column.replace(/_/g, ' ')}</div>
       </div>
     </th>
   }
@@ -127,13 +125,13 @@ class HospitalsApp extends React.Component {
     let newSortAsc = sortAsc;
     if (column === sortColumn) {
       newSortAsc = !newSortAsc;
+    } else {
+      newSortAsc = true;
     }
 
     newResults.sort(function (inputA, inputB) {
       let a;
       let b;
-
-      console.log('sorting', inputA.attributes[column])
 
       if (typeof inputA.attributes[column] === 'string') {
         a = inputA.attributes[column].toLowerCase();
@@ -175,56 +173,56 @@ class HospitalsApp extends React.Component {
       return null;
     }
 
-    console.log(results)
     const stateOptions = Object.values(statesUSA).map(item => <option key={`option-${item}`}>{item}</option>);
 
     return <div id="hospitals">
-      {true && <header>
+      <header>
           <div id="header-content">
             <div>
               <h1>covid-19 Surge Planning</h1>
-              <h2>USA Hospitals Beds/Ventilator Capacity</h2>
+              <h2>USA Hospitals Bed/Ventilator Capacity</h2>
             </div>
             <div className="header-links">
-              <div className="link">
-                <a className="img-link" href="https://github.com/octopicorn/covid19-charts" target="_blank"><img src="/github-logo.svg" /></a>
-                <a className="text-link" href="https://github.com/octopicorn/covid19-charts" target="_blank">https://github.com/octopicorn/covid19-charts</a>
-              </div>
               <div className="link">
                 <a className="img-link" href="https://www.facebook.com/groups/pandemicsurgeplan/" target="_blank"><img src="/fb-logo.png" /></a>
                 <a className="text-link" href="https://www.facebook.com/groups/pandemicsurgeplan/" target="_blank">https://www.facebook.com/groups/pandemicsurgeplan/</a>
               </div>
               <div className="link">
                 <a className="img-link" href="https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629" target="_blank"><i className={`fa fa-info-circle`}></i></a>
-                <a className="data-link" href="https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629" target="_blank">data source</a>
+                <a className="text-link" href="https://www.arcgis.com/home/item.html?id=1044bb19da8d4dbfb6a96eb1b4ebf629" target="_blank">data source</a>
+              </div>
+              <div className="link">
+                <a className="img-link" href="https://github.com/octopicorn/covid19-charts" target="_blank"><img src="/github-logo.svg" /></a>
+                <a className="text-link" href="https://github.com/octopicorn/covid19-charts" target="_blank">https://github.com/octopicorn/covid19-charts</a>
               </div>
             </div>
           </div>
           <div id="picker" style={{padding: 10, display: 'flex'}}>
             <div>
+              <div style={{display: 'flex'}}>
+                <div style={{padding: '2px 5px'}}><i className="fa fa-star" style={{color: 'gold'}}></i> Select State</div>
+
+              </div>
               <select defaultValue={selectedState} onChange={this.onSelectState}>
                 {stateOptions}
-              </select>
+              </select><span style={{paddingLeft: 5, fontWeight: 'bold'}}>{results.length || 0} Results</span>
             </div>
-            <div style={{marginLeft: 25}}>
-              <strong>{results.length || 0} Results</strong>
-            </div>
+
           </div>
-        </header>}
+        </header>
 
         <div id="content">
-
-
+          
             <table>
               <thead>
                 <tr>
+                  {this.renderColumn('HOSPITAL_NAME')}
                   {this.renderColumn('COUNTY_NAME')}
                   {this.renderColumn('NUM_ICU_BEDS')}
                   {this.renderColumn('ADULT_ICU_BEDS')}
                   {this.renderColumn('PEDI_ICU_BEDS')}
                   {this.renderColumn('BED_UTILIZATION')}
                   {this.renderColumn('AVG_VENTILATOR_USAGE')}
-                  {this.renderColumn('HOSPITAL_NAME')}
                   {this.renderColumn('HOSPITAL_TYPE')}
                   {this.renderColumn('HQ_ADDRESS')}
                   {this.renderColumn('HQ_ADDRESS1')}
@@ -240,13 +238,13 @@ class HospitalsApp extends React.Component {
               {results.map((item, index) => {
                 return (
                   <tr key={`row-${index}`}>
+                    <td>{item.attributes.HOSPITAL_NAME}</td>
                     <td>{item.attributes.COUNTY_NAME}</td>
                     <td>{item.attributes.NUM_ICU_BEDS}</td>
                     <td>{item.attributes.ADULT_ICU_BEDS}</td>
                     <td>{item.attributes.PEDI_ICU_BEDS}</td>
                     <td>{item.attributes.BED_UTILIZATION}</td>
                     <td>{item.attributes.AVG_VENTILATOR_USAGE}</td>
-                    <td>{item.attributes.HOSPITAL_NAME}</td>
                     <td>{item.attributes.HOSPITAL_TYPE}</td>
                     <td>{item.attributes.HQ_ADDRESS}</td>
                     <td>{item.attributes.HQ_ADDRESS1}</td>
