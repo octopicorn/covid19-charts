@@ -996,7 +996,7 @@ $(function () {
     }
 
   } else {
-    defaultAreasOfInterest.countries = ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'];
+    defaultAreasOfInterest.countries = [];
   }
 
   if (queryObject.states && queryObject.states.length) {
@@ -1014,6 +1014,15 @@ $(function () {
 
   } else {
     defaultAreasOfInterest.counties = [];
+  }
+
+  // set a default list of countries to start with if no other areas were passed in through the url
+  if (
+    (!queryObject.countries || !queryObject.countries.length)
+    && (!queryObject.states || !queryObject.states.length)
+    && (!queryObject.counties || !queryObject.counties.length)
+  ) {
+    defaultAreasOfInterest.countries = ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'];
   }
 
   const currentQueryObject = {
