@@ -61,6 +61,7 @@ th {
 #header-content {
     display: flex;
     align-items: flex-start;
+    justify-content: space-between;
 }
 #content {
     height: 100vh;
@@ -74,6 +75,8 @@ th {
 }
 #picker select {
     font-size: 15px;
+    color: #000;
+    background-color: #FFF;
 }
 
 .header-links {
@@ -124,7 +127,7 @@ th {
 
     .header-links .link {
         padding: 2px;
-        border-radius: 10px;
+        border-radius: 15px;
     }
     .header-links .link a img, .header-links .link a i {
         font-size: 21px;
@@ -142,6 +145,10 @@ th {
 
     .header-links .link .text-link {
         display: none;
+    }
+
+    .chart-icon {
+        font-size: 10px;
     }
 
     .github-link a#github-text-link { display: none; }
@@ -181,6 +188,9 @@ th {
 /* desktop computer screens */
 @media (min-width:993px){
 
+    #header-content {
+        width: 50%;
+    }
 
 }
 

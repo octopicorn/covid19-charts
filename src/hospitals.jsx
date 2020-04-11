@@ -182,6 +182,11 @@ class HospitalsApp extends React.Component {
               <h1>covid-19 Surge Planning</h1>
               <h2>USA Hospitals Bed/Ventilator Capacity</h2>
             </div>
+            <div>
+              <div style={{borderRadius: 5, padding: 5, backgroundColor: 'gold'}}>
+                <a className='chart-icon' href="/" target="_blank" style={{display: 'block', textDecoration: 'none'}}>timeseries</a>
+              </div>
+            </div>
             <div className="header-links">
               <div className="link">
                 <a className="img-link" href="https://www.facebook.com/groups/pandemicsurgeplan/" target="_blank"><img src="/fb-logo.png" /></a>

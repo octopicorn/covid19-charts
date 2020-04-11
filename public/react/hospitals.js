@@ -244,6 +244,19 @@ var HospitalsApp = function (_React$Component) {
             ),
             React.createElement(
               "div",
+              null,
+              React.createElement(
+                "div",
+                { style: { borderRadius: 5, padding: 5, backgroundColor: 'gold' } },
+                React.createElement(
+                  "a",
+                  { className: "chart-icon", href: "/", target: "_blank", style: { display: 'block', textDecoration: 'none' } },
+                  "timeseries"
+                )
+              )
+            ),
+            React.createElement(
+              "div",
               { className: "header-links" },
               React.createElement(
                 "div",
