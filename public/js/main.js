@@ -9,21 +9,7 @@ let chart;
 let chartConfig;
 let isMobile;
 
-let settings = {
-  // metric: 'confirmed',
-  // snapTo: true,
-  // snapToNumber: 100,
-  // transformMode: null,
-  // plotType: 'linear',
-  // newInPastDays: 3,
-  // countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
-  // states: [],
-  // counties: [],
-}
-
-let areasOfInterest = {
-
-}
+let settings = {};
 
 let detectMobile = {
   Android: function() {
@@ -51,11 +37,11 @@ function searchList(group, searchTerm) {
 
   if (group === 'counties') {
     results = menuData[group].filter(item => {
-      return item[0].toLowerCase().indexOf(searchTerm) === 0
+      return item[0].toLowerCase().indexOf(searchTerm.toLowerCase()) === 0
     });
   } else {
     results = menuData[group].filter(item => {
-      return item.toLowerCase().indexOf(searchTerm) === 0;
+      return item.toLowerCase().indexOf(searchTerm.toLowerCase()) === 0;
     });
   }
 
@@ -185,6 +171,8 @@ function bindMenus() {
         }
       }
     }
+
+    updateQueryStringFromSettings();
 
     drawChart();
 
@@ -906,32 +894,31 @@ function getUrlQueryAsObject() {
       let item = queryParam.split('=');
 
       let value = decodeURIComponent(item[1]);
-
-      if (value === 'true') {
-        value = true;
-      } else if (value === 'false') {
-        value = false;
-      }
-
-      // save each as single value or expand into array when duplicates found
-      if (typeof result[item[0]] !== 'undefined') {
-        if (!Array.isArray(result[item[0]])) {
-          result[item[0]] = [result[item[0]]];
+      if (typeof value !== 'undefined') {
+        if (value === 'true') {
+          value = true;
+        } else if (value === 'false') {
+          value = false;
         }
-        result[item[0]].push(value);
-      } else {
-        result[item[0]] = value;
+
+        // save each as single value or expand into array when duplicates found
+        if (typeof result[item[0]] !== 'undefined') {
+          if (!Array.isArray(result[item[0]])) {
+            result[item[0]] = [result[item[0]]];
+          }
+          result[item[0]].push(value);
+        } else {
+          result[item[0]] = value;
+        }
       }
 
     });
 
   }
-
   return result;
 }
 
 function queryObjectToUrl () {
-
   const queryObject = {
     ...settings,
   }
@@ -1000,25 +987,33 @@ $(function () {
     newInPastDays: 3,
   }
 
-  let defaultAreasOfInterest;
+  const defaultAreasOfInterest = {};
 
   // if any locations were pre-picked, just forget about setting any default locations
-  if (queryObject.countries && queryObject.countries.length
-    || queryObject.states && queryObject.states.length
-    || queryObject.counties && queryObject.counties.length ) {
+  if (queryObject.countries && queryObject.countries.length) {
+    if (!Array.isArray(queryObject.countries)) {
+      queryObject.countries = [queryObject.countries];
+    }
 
-    defaultAreasOfInterest = {
-      countries: [],
-      states: [],
-      counties: [],
+  } else {
+    defaultAreasOfInterest.countries = ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'];
+  }
+
+  if (queryObject.states && queryObject.states.length) {
+    if (!Array.isArray(queryObject.states)) {
+      queryObject.states = [queryObject.states];
     }
   } else {
-    // if there are no locations pre-picked in url, pick a handful of default countries to show
-    defaultAreasOfInterest = {
-      countries: ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'],
-      states: [],
-      counties: [],
+    defaultAreasOfInterest.states = [];
+  }
+
+  if (queryObject.counties && queryObject.counties.length) {
+    if (!Array.isArray(queryObject.counties)) {
+      queryObject.counties = [queryObject.counties];
     }
+
+  } else {
+    defaultAreasOfInterest.counties = [];
   }
 
   const currentQueryObject = {
@@ -1053,15 +1048,12 @@ $(function () {
       // data has been loaded
 
       const [menu] = menuResponse;
-      console.info('menu', menu);
       menuData = menu;
 
       const [data] = timeseriesResponse;
-      console.info('timeseries', data);
       covData = data;
 
       const [populations] = populationsResponse;
-      console.info('populations', populations);
       populationsData = populations;
 
       renderMenus();
@@ -1093,7 +1085,7 @@ $(function () {
               {
                 scaleLabel: {
                   display: true,
-                  labelString: `github.com/octopicorn/covid19-charts    Data: Johns Hopkins CSSE, usafacts.org, NYT`,
+                  labelString: `github.com/octopicorn/covid19-charts  Data: Johns Hopkins CSSE, usafacts.org, NYT`,
                   fontColor: '#333',
                   fontSize: 8,
                 }
@@ -1117,7 +1109,7 @@ $(function () {
       chart = new Chart(ctx, chartConfig);
 
 
-      // capability is there to pull the latest daya from today, but turned off for now because it gives false
+      // capability is there to pull the latest data from today, but turned off for now because it gives false
       // impression that curve is getting better when it's actually just that we are only partially through the
       // given day. true comparative data is only visually valuable when we are comparing similar units of time
       // uncomment to see this working if you like...
