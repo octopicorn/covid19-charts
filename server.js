@@ -191,7 +191,7 @@ const prepareTodayReportResponse = async(todayResponse) => {
   // here we have the same problem as before with generate timeseries:
   // for US, Canada, Australia, China there are only state and province numbers, not total rollup numbers for those countries
   // so we will need to tally them as we loop
-  const countriesToBeTallied = ['US', 'Canada', 'Australia', 'China'];
+  const countriesToBeTallied = ['Canada', 'Australia', 'China'];
 
   // the ESRI payload only contains updated info for country and state/province, not county
   for (country of menu.countries) {
