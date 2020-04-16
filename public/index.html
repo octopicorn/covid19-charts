@@ -45,23 +45,34 @@
   <main>
     <div id="left-pane">
       <header>
-        <div style="padding-bottom: 5px; display: flex; justify-content: space-between">
+        <div style="display: flex; justify-content: space-between; align-items: center">
           <div>
             <h1>covid-19 charts</h1>
-            <span style="font-size: 10px;">(right click on chart to save image)</span>
+            <span id="right-click-image" style="font-size: 10px;">(right click on chart to save image)</span>
           </div>
-          <div>
-            <div style="margin-left: 15px; border-radius: 5px; padding: 5px; background-color: #FFF">
+          <div id="copy-to-clipboard">
+            <div style="margin: 3px; border-radius: 5px; padding: 4px; background-color: #FFF">
+              <a id="copy-link-to-clipboard" href="#" style="text-decoration: none"><i class="fa fa-link" style="color: grey"></i> copy chart</a>
+            </div>
+          </div>
+          <div id="usa-hospitals">
+            <div style="margin: 3px; border-radius: 5px; padding: 4px; background-color: #FFF">
               <a href="/hospitals" target="_blank" style="text-decoration: none"><i class="fa fa-star" style="color: gold"></i> USA hospitals</a>
             </div>
           </div>
+          <div id="github-link-mobile">
+            <div style="margin: 3px; border-radius: 5px; padding: 4px; background-color: #FFF">
+              <a href="https://github.com/octopicorn/covid19-charts" target="_blank" style="text-decoration: none"><img src="/github-logo.svg" /></a>
+            </div>
+          </div>
         </div>
-        <div class="github-link">
+        <div id="github-link-desktop" class="github-link">
           <img src="/github-logo.svg" />
-          <a href="https://github.com/octopicorn/covid19-charts" target="_blank">https://github.com/octopicorn/covid19-charts</a>
+          <a id="github-text-link" href="https://github.com/octopicorn/covid19-charts" target="_blank">https://github.com/octopicorn/covid19-charts</a>
         </div>
       </header>
       <div>
+        <div id="last-updated">Last Updated: <span id="date-last-updated"></span> (Greenwich Mean Time)</div>
         <div id="clear-all-chart-data" style="display:none"><a href="#">clear all data</a></div>
         <section id="chart-content">
           <canvas id="chart-placeholder"></canvas>
@@ -116,7 +127,7 @@
               </div>
             </div>
             <div>
-              <div style="font-size: 10px; padding-left: 0px; padding-bottom: 20px; text-align: right">*&nbsp;more info on the <a href="https://www.youtube.com/watch?feature=youtu.be&v=54XLXg4fYsc" target="_blank">new vs. existing chart</a></div>
+              <div style="font-size: 10px; padding-left: 0px; padding-bottom: 5px; text-align: right">*&nbsp;more info on the <a href="https://www.youtube.com/watch?feature=youtu.be&v=54XLXg4fYsc" target="_blank">new vs. existing chart</a></div>
             </div>
           </div>
         </div>

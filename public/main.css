@@ -13,7 +13,7 @@ h1 {
 
 header {
     background-color: #EEE;
-    padding: 10px 0px 10px 25px;
+    padding: 10px 0px 0px 10px;
 }
 
 header img {
@@ -43,6 +43,12 @@ nav {
     padding-top: 25px;
     background-color: #EEE;
     max-height: 100vh;
+}
+
+#last-updated {
+    margin: 8px;
+    font-style: italic;
+    font-size: 10px;
 }
 
 .options-container {
@@ -100,8 +106,9 @@ button:disabled {
 
 .option-container {
     display: flex;
-    align-items: center;
-    padding: 10px;
+    align-items: flex-start;
+    padding: 0px 10px;
+    margin-top: 5px;
 }
 .option-container.disabled {
     color: #AAA;
@@ -110,7 +117,7 @@ button:disabled {
 .option-title {
     font-weight: bold;
     font-size: 14px;
-    padding: 10px;
+    padding: 6px 10px;
 }
 
 .buttons-container {
@@ -293,15 +300,14 @@ button:disabled {
 @media (max-width:992px) {
 
     header {
-        padding: 10px 10px 10px 10px;
+        padding: 10px 10px 0px 10px;
     }
     header a {
         font-size: 13px;
     }
     header img {
-        width: 20px;
-        height: 20px;
-        padding-right: 10px;
+        width: 15px;
+        height: 15px;
     }
     h1 {
         font-size: 16px;
@@ -354,11 +360,21 @@ button:disabled {
     .search-menu-list-input {
         width: 70px;
     }
+
+    #right-click-image {
+        display: none;
+    }
+    #github-link-desktop {
+        display: none;
+    }
 }
 
 @media (max-width:992px) and (orientation: landscape) {
     #chart-content {
         height: 100vh;
+    }
+    #github-link-desktop {
+        display: none;
     }
 }
 
@@ -369,7 +385,7 @@ button:disabled {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 0px 10px 10px;
+
     }
     header img {
         width: 20px;
@@ -408,7 +424,15 @@ button:disabled {
         right: 5px;
         width: 50px;
     }
-
+    #copy-to-clipboard {
+        /*display: none;*/
+    }
+    #github-link-mobile {
+        display: none;
+    }
+    #usa-hospitals, #copy-to-clipboard {
+        margin: 15px;
+    }
 
 }
 
