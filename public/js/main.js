@@ -181,6 +181,11 @@ function bindMenus() {
 
 function bindButtons(){
 
+  $('#copy-link-to-clipboard').on('click', function(e){
+    e.preventDefault();
+    copyUrlToClipboard();
+  })
+
   $('.button-change-chart-type').on('click', function() {
     $('.button-change-chart-type').removeClass('selected');
     $(this).addClass('selected');
@@ -953,11 +958,29 @@ function initializeInputs() {
 
   // new in past days num
   $('#new-in-past-days').val(Number(settings.newInPastDays));
+
+
+  // metric
+  $('.button-change-timeseries-data-type').removeClass('selected');
+  $(`.button-change-timeseries-data-type[data-type=${settings.metric}]`).addClass('selected');
 }
 
 function updateQueryStringFromSettings() {
   const url = queryObjectToUrl();
   window.history.replaceState(settings, null, `/?${url}`);
+}
+
+function updateDateLastUpdated(timestamp) {
+  var fDate	= new Date(Number(timestamp));
+  $('#date-last-updated').text(`${fDate.toUTCString()}`);
+}
+
+function copyUrlToClipboard() {
+  var $temp = $("<input>");
+  $("body").append($temp);
+  $temp.val(window.location.href).select();
+  document.execCommand("copy");
+  $temp.remove();
 }
 
 $(function () {
@@ -1065,6 +1088,7 @@ $(function () {
       const [populations] = populationsResponse;
       populationsData = populations;
 
+      updateDateLastUpdated(data.lastUpdate);
       renderMenus();
       bindMenus();
       bindButtons();
