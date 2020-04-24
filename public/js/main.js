@@ -1098,6 +1098,7 @@ $(function () {
 
       // set up chart
       chartConfig = {
+
         type: 'line',
         data: {
           labels: covData.timeseriesDays,

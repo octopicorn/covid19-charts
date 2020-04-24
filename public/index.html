@@ -3,6 +3,9 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta http-equiv="Cache-Control" content="no-store" />
+  
   <meta property="og:image" content="https://valis.pub/fb-thumb3.png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://valis.pub" />
@@ -18,14 +21,8 @@
   <script type="text/javascript" src="/js/chartjs/Chart.bundle.min.js"></script>
   <script type="text/javascript" src="/js/chartjs/chartjs-plugin-colorschemes.min.js"></script>
 
-  <script type="text/javascript">
-    // use cachebuster random to ensure new script gets loaded
-    var cachebuster = Math.round(new Date().getTime() / 1000);
-
-    document.write('<li' + `nk href="/main.css?cb=${cachebuster}" rel="stylesheet" type="text/css"/>`);
-    document.write('<scr'+`ipt type="text/javascript" src="/js/main.js?cb=${cachebuster}"></scr` + 'ipt>');
-  </script>
-
+  <link href="/main.css" rel="stylesheet" type="text/css"/>
+  <script src="/js/main.js"></script>
 
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-162792055-1"></script>
