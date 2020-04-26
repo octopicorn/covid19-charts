@@ -58,7 +58,7 @@ const fetchFileByHttps = (filestream, hostname, url) => {
 exports.fetchDataHistoricalV1 = (category, file) => {
 
   const hostname = 'raw.githubusercontent.com';
-  const url = `/CSSEGISandData/2019-nCoV/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-${category}.csv`;
+  const url = `/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-${category}.csv`;
   return fetchFileByHttps(file, hostname, url);
 
 }
@@ -66,7 +66,7 @@ exports.fetchDataHistoricalV1 = (category, file) => {
 exports.fetchDataHistoricalV2 = (category, file) => {
 
   const hostname = 'raw.githubusercontent.com';
-  const url = `/CSSEGISandData/2019-nCoV/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_${category.toLowerCase()}_global.csv`;
+  const url = `/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_${category.toLowerCase()}_global.csv`;
   return fetchFileByHttps(file, hostname, url);
 
 }
@@ -74,7 +74,7 @@ exports.fetchDataHistoricalV2 = (category, file) => {
 exports.fetchDataDailyReport = (fileName, fileStream) => {
 
   const hostname = 'raw.githubusercontent.com';
-  const url = `/CSSEGISandData/2019-nCoV/master/csse_covid_19_data/csse_covid_19_daily_reports/${fileName}`;
+  const url = `/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${fileName}`;
   return fetchFileByHttps(fileStream, hostname, url);
 
 }
