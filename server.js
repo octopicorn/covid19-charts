@@ -112,7 +112,9 @@ const downloadHistoricalData = async() => {
       const localFilePath = path.join(__dirname, 'downloads', 'daily-reports', `Catch_Up_Report_${startDateV2.format('YYYY-MM-DD')}.csv`);
 
       if (!fs.existsSync(localFilePath)) {
-        console.log(`Downloading https://raw.githubusercontent.com/CSSEGISandData/2019-nCoV/master/csse_covid_19_data/csse_covid_19_daily_reports/${remoteFileName} to ${localFilePath}`);
+        console.log('-------------------------------------')
+        console.log('remote file: ', remoteFileName)
+        console.log(`Downloading https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${remoteFileName} to ${localFilePath}`);
         const fileStream = fs.createWriteStream(localFilePath);
         await api.fetchDataDailyReport(remoteFileName, fileStream);
       }

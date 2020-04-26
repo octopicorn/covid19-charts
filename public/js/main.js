@@ -1088,6 +1088,9 @@ $(function () {
       const [populations] = populationsResponse;
       populationsData = populations;
 
+      console.log(menuData);
+      console.log(covData);
+
       updateDateLastUpdated(data.lastUpdate);
       renderMenus();
       bindMenus();
