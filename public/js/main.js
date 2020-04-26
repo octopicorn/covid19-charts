@@ -386,7 +386,7 @@ function transformDataByDelta (data) {
   const result = [];
   data.forEach((item, index) => {
 
-    if (slidingWindow.length < slidingWindowSize -1) {
+    if (slidingWindow.length < slidingWindowSize) {
       // first, just skip the first n-1 records to gather the first sliding window
       slidingWindow.push(item);
 
