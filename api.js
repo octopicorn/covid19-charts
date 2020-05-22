@@ -1,5 +1,6 @@
 const https = require('https');
-const axios = require('axios')
+const axios = require('axios');
+const fs = require('fs');
 
 
 exports.fetchDataToday = () => {
@@ -71,10 +72,16 @@ exports.fetchDataHistoricalV2 = (category, file) => {
 
 }
 
-exports.fetchDataDailyReport = (fileName, fileStream) => {
+exports.fetchDataDailyReport = async (fileName, localFilePath) => {
 
-  const hostname = 'raw.githubusercontent.com';
-  const url = `/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${fileName}`;
-  return fetchFileByHttps(fileStream, hostname, url);
+  const url = `CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${fileName}`;
+
+  try {
+    const response = await axios.get(`https://raw.githubusercontent.com/${url}`);
+    const fileStream = fs.createWriteStream(localFilePath);
+    filestream.write(response.data);
+  } catch (error) {
+    console.log(error.toString());
+  }
 
 }
