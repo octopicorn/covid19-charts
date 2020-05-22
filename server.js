@@ -115,8 +115,8 @@ const downloadHistoricalData = async() => {
         console.log('-------------------------------------')
         console.log('remote file: ', remoteFileName)
         console.log(`Downloading https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${remoteFileName} to ${localFilePath}`);
-        const fileStream = fs.createWriteStream(localFilePath);
-        await api.fetchDataDailyReport(remoteFileName, fileStream);
+
+        await api.fetchDataDailyReport(remoteFileName, localFilePath);
       }
       startDateV2.add(1, 'day');
     }
