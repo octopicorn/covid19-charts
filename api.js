@@ -78,8 +78,12 @@ exports.fetchDataDailyReport = async (fileName, localFilePath) => {
 
   try {
     const response = await axios.get(`https://raw.githubusercontent.com/${url}`);
+    if (response.status !== 200) {
+      throw new Error('Could not access remote file', url, 'Response status:', response.status);
+    }
+    console.log('*** Success Response: 200', url)
     const fileStream = fs.createWriteStream(localFilePath);
-    filestream.write(response.data);
+    fileStream.write(response.data);
   } catch (error) {
     console.log(error.toString());
   }
