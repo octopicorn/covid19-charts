@@ -77,16 +77,6 @@
       </div>
       <section>
         <div class="options-container">
-
-          <div class="option-container" id="option-container-snapTo">
-            <div class="option-title">
-              Align to First <input type="text" value="100" id="snap-to-days-input" />
-            </div>
-            <label class="checkbox">
-              <input type="checkbox" id="snapToToggle" />
-              <span class="checkmark"></span>
-            </label>
-          </div>
           <!--
           <div class="option-container">
             <div class="option-title">
@@ -99,6 +89,41 @@
           </div>
           -->
 
+          <div>
+            <div class="option-container">
+              <div class="option-title">
+                Data
+              </div>
+              <div class="buttons-container">
+                <button class="button-change-timeseries-data-type selected" data-type="confirmed">cases</button>
+                <button class="button-change-timeseries-data-type" data-type="deaths">deaths</button>
+                <button class="button-change-timeseries-data-type" data-type="recovered">recovered</button>
+                <!-- <button class="button-change-timeseries-data-type" data-type="both">both</button>-->
+              </div>
+            </div>
+            <div style="font-size: 10px; padding-left: 70px; padding-bottom: 20px">* recovered data only available in countries</div>
+          </div>
+
+          <div>
+            <div class="option-container">
+
+              <div class="option-title">
+                Chart
+              </div>
+              <div class="buttons-container">
+                <button class="button-change-chart-transform" data-type="delta"><input id="new-in-past-days-input" type="text"  style="width: 25px"/> day rolling average</button>
+                <button class="button-change-chart-transform" data-type="population">per capita</button>
+                <button class="button-change-chart-transform" data-type="doubling">days to double</button>
+                <button class="button-change-chart-transform" data-type="newVsExisting">new vs existing</button>
+                <button class="button-change-chart-transform selected" data-type="">raw</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 10px; padding-left: 0px; padding-bottom: 5px; text-align: center">*&nbsp;about <a href="https://www.youtube.com/watch?feature=youtu.be&v=54XLXg4fYsc" target="_blank">new vs. existing chart</a></div>
+            </div>
+          </div>
+
+
           <div class="option-container">
             <div class="option-title">
               Plot
@@ -109,48 +134,31 @@
             </div>
           </div>
 
-          <div>
-            <div class="option-container">
-
-              <div class="option-title">
-                Transform
-              </div>
-              <div class="buttons-container">
-                <button class="button-change-chart-transform selected" data-type="">none</button>
-                <button class="button-change-chart-transform" data-type="population">per 100k people</button>
-                <button class="button-change-chart-transform" data-type="delta">new in past <input id="new-in-past-days-input" type="text" value="3" style="width: 25px"/> days</button>
-                <button class="button-change-chart-transform" data-type="doubling">days to double</button>
-                <button class="button-change-chart-transform" data-type="newVsExisting">new vs existing</button>
-              </div>
+          <div class="option-container" id="option-container-snapTo">
+            <div class="option-title">
+              Align to First <input type="text" value="100" id="snap-to-days-input" />
             </div>
-            <div>
-              <div style="font-size: 10px; padding-left: 0px; padding-bottom: 5px; text-align: right">*&nbsp;more info on the <a href="https://www.youtube.com/watch?feature=youtu.be&v=54XLXg4fYsc" target="_blank">new vs. existing chart</a></div>
-            </div>
+            <label class="checkbox">
+              <input type="checkbox" id="snapToToggle" />
+              <span class="checkmark"></span>
+            </label>
           </div>
+
         </div>
 
         <div class="options-container">
 
           <div class="option-container">
             <div class="option-title">
-              Show
+              Line Thickness
             </div>
             <div class="buttons-container">
-              <button class="button-change-timeseries-data-type selected" data-type="confirmed">confirmed</button>
-              <button class="button-change-timeseries-data-type" data-type="deaths">deaths</button>
-              <button class="button-change-timeseries-data-type" data-type="recovered">recovered</button>
-              <!-- <button class="button-change-timeseries-data-type" data-type="both">both</button>-->
+              <button class="button-change-line-width" data-value="1">&nbsp;1&nbsp;</button>
+              <button class="button-change-line-width" data-value="2">&nbsp;2&nbsp;</button>
+              <button class="button-change-line-width" data-value="3">&nbsp;3&nbsp;</button>
             </div>
-
           </div>
 
-
-
-
-        </div>
-        <div style="font-size: 10px; padding-left: 70px; padding-bottom: 20px">* recovered data only available in countries</div>
-
-        <div class="options-container">
           <div class="option-container">
             <div class="option-title">
               Color
@@ -219,18 +227,6 @@
           </div>
         </div>
 
-        <div class="options-container">
-          <div class="option-container">
-            <div class="option-title">
-              Line Thickness
-            </div>
-            <div class="buttons-container">
-              <button class="button-change-line-width" data-value="1">&nbsp;1&nbsp;</button>
-              <button class="button-change-line-width selected" data-value="2">&nbsp;2&nbsp;</button>
-              <button class="button-change-line-width" data-value="3">&nbsp;3&nbsp;</button>
-            </div>
-          </div>
-        </div>
 
       </section>
     </div>

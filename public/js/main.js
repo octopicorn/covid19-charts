@@ -11,6 +11,16 @@ let isMobile;
 
 let settings = {};
 
+const defaultSettings = {
+  metric: 'deaths', // confirmed | deaths | resolved
+  snapTo: false,
+  snapToNumber: 100,
+  transformMode: 'population',
+  plotType: 'linear',
+  newInPastDays: 7,
+  lineWidth: 2,
+}
+
 let detectMobile = {
   Android: function() {
     return navigator.userAgent.match(/Android/i);
@@ -399,9 +409,18 @@ function transformDataByDelta (data) {
       const earliestItem = slidingWindow[0];
       const latestItem = slidingWindow[slidingWindow.length - 1];
 
-      const newCases = latestItem - earliestItem; // new cases = current tally minus last week's tally
+      // new cases = current tally minus last week's tally
+      const newCases = (latestItem - earliestItem);
 
-      result.push(newCases);
+      // rolling average only calculated if new cases greater than zero
+      // some countries have negative new cases because of revisions
+      let rollingAverage = 0;
+      if (newCases > 0) {
+        rollingAverage = newCases / slidingWindowSize;
+      }
+
+
+      result.push(rollingAverage);
 
       // remove oldest element from sliding window
       slidingWindow.shift();
@@ -495,7 +514,7 @@ function drawChart() {
   let pointRadius;
   let borderWidth;
 
-  let lineWidthSetting = settings.lineWidth || 2;
+  let lineWidthSetting = settings.lineWidth ? Number(settings.lineWidth) : defaultSettings.lineWidth;
 
   borderWidth = 0;
   if (lineWidthSetting === 1) {
@@ -647,7 +666,7 @@ function drawChart() {
     if (settings.transformMode === 'population') {
       yAxisLabel = `${yAxisLabel} per 100k people`;
     } else if (settings.transformMode === 'delta') {
-      yAxisLabel = `${yAxisLabel} daily change`;
+      yAxisLabel = `${yAxisLabel} ${settings.newInPastDays} day rolling average`;
     } else if (settings.transformMode === 'doubling') {
       yAxisLabel = `${yAxisLabel} - Days to double`;
     }
@@ -957,12 +976,16 @@ function initializeInputs() {
   $(`.button-change-chart-transform[data-type=${settings.transformMode}]`).addClass('selected');
 
   // new in past days num
-  $('#new-in-past-days').val(Number(settings.newInPastDays));
+  $('#new-in-past-days-input').val(Number(settings.newInPastDays));
 
 
   // metric
   $('.button-change-timeseries-data-type').removeClass('selected');
   $(`.button-change-timeseries-data-type[data-type=${settings.metric}]`).addClass('selected');
+
+  // line thickness
+  $('.button-change-line-width').removeClass('selected');
+  $(`.button-change-line-width[data-value=${settings.lineWidth}]`).addClass('selected');
 }
 
 function updateQueryStringFromSettings() {
@@ -1001,15 +1024,6 @@ $(function () {
 
   let queryObject = getUrlQueryAsObject();
 
-  let defaultSettings = {
-    metric: 'confirmed', // confirmed | deaths | resolved
-    snapTo: true,
-    snapToNumber: 100,
-    transformMode: '',
-    plotType: 'linear',
-    newInPastDays: 3,
-  }
-
   const defaultAreasOfInterest = {};
 
   // if any locations were pre-picked, just forget about setting any default locations
@@ -1045,7 +1059,7 @@ $(function () {
     && (!queryObject.states || !queryObject.states.length)
     && (!queryObject.counties || !queryObject.counties.length)
   ) {
-    defaultAreasOfInterest.countries = ['Italy', 'Spain', 'France', 'United Kingdom', 'Canada', 'US'];
+    defaultAreasOfInterest.countries = ['US', 'Italy', 'Spain', 'United Kingdom', 'Brazil'];
   }
 
   const currentQueryObject = {
