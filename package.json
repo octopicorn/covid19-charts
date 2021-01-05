@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/octopicorn/covid19-track#readme",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "babel-cli": "^6.26.0",
     "babel-preset-react-app": "^3.1.2",
     "braces": "^3.0.2",
