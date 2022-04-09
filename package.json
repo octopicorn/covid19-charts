@@ -28,7 +28,7 @@
     "country-json": "^1.1.0",
     "csv-parse": "^4.8.8",
     "express": "^4.17.1",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "regression": "^2.0.1"
   },
   "devDependencies": {
